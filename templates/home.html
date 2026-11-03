@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Levels{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>Learn Python, one level at a time</h1>
+  <p>Read a short lesson, then type the <b>missing lines</b> in a real program and run it right in your browser.
+     Stuck? Your AI tutor gives up to <b>3 hints per level</b>.</p>
+  <div class="progress">
+    <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+    <span id="progress-text" class="muted"></span>
+  </div>
+  <a id="report-cta" class="btn btn-primary" href="{% url 'report' %}" hidden>🏆 See your grade</a>
+</section>
+
+<section class="level-grid">
+  {% for level in levels %}
+  <article class="level-card" data-level="{{ level.number }}">
+    <div class="card-top">
+      <span class="level-num">Level {{ level.number }}</span>
+      <span class="badge"></span>
+    </div>
+    <h2>{{ level.title }}</h2>
+    <p class="topic"><code>{{ level.topic }}</code></p>
+    <p class="muted">{{ level.summary }}</p>
+    <div class="card-bottom">
+      <span class="card-stats muted"></span>
+      <a class="btn btn-primary card-btn" href="{% url 'level' level.number %}">Start</a>
+    </div>
+  </article>
+  {% endfor %}
+</section>
+
+<section class="grading-info">
+  <h3>How you are graded</h3>
+  <table class="table">
+    <thead><tr><th>Grade</th><th>Condition (all 5 levels)</th></tr></thead>
+    <tbody>
+      <tr><td><b>A</b></td><td>No hints and no incorrect attempts</td></tr>
+      <tr><td><b>B+</b></td><td>1–5 hints (or no hints but some incorrect attempts)</td></tr>
+      <tr><td><b>B</b></td><td>6–9 hints</td></tr>
+      <tr><td><b>C</b></td><td>10–12 hints</td></tr>
+      <tr><td><b>D</b></td><td>13–15 hints, or a solution had to be shown</td></tr>
+    </tbody>
+  </table>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>window.LEVEL_NUMBERS = [{% for l in levels %}{{ l.number }}{% if not forloop.last %},{% endif %}{% endfor %}];</script>
+<script src="{% static 'js/home.js' %}"></script>
+{% endblock %}

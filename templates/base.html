@@ -1,0 +1,39 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>{% block title %}PyTutor AI{% endblock %} · PyTutor AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.10.0/build/styles/atom-one-dark.min.css">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="{% url 'home' %}"><span class="logo">🐍</span> PyTutor <span class="brand-ai">AI</span></a>
+    <nav>
+      <a href="{% url 'home' %}">Levels</a>
+      <a href="{% url 'report' %}">Report</a>
+      <a href="{% url 'ai_settings' %}">AI Settings</a>
+      <span id="ai-pill" class="ai-pill" title="Current AI tutor - change it in AI Settings"></span>
+      <button type="button" class="btn btn-ghost btn-sm" data-reset-progress>↺ Reset Progress</button>
+    </nav>
+  </header>
+
+  <main class="{% block main_class %}container{% endblock %}">
+    {% block content %}{% endblock %}
+  </main>
+
+  {{ ai_presets|json_script:"ai-presets" }}
+  <script>
+    window.AI_PRESETS = JSON.parse(document.getElementById("ai-presets").textContent);
+    window.AI_DEFAULT_PROVIDER = "{{ ai_default_provider }}";
+  </script>
+  <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.10.0/build/highlight.min.js"></script>
+  <script src="{% static 'js/common.js' %}"></script>
+  <script>document.addEventListener("DOMContentLoaded", () => window.hljs && hljs.highlightAll());</script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

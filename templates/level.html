@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Level {{ level.number }}: {{ level.title }}{% endblock %}
+{% block main_class %}level-layout{% endblock %}
+{% block content %}
+<div id="locked-overlay" class="locked-overlay" hidden>
+  <div class="locked-box">
+    <h2>🔒 Level {{ level.number }} is locked</h2>
+    <p>Finish the previous level first.</p>
+    <a class="btn btn-primary" href="{% url 'home' %}">Back to levels</a>
+  </div>
+</div>
+
+<!-- ============ Lesson ============ -->
+<section class="lesson panel">
+  <div class="lesson-head">
+    <span class="level-num">Level {{ level.number }} of {{ level_numbers|length }}</span>
+    <h1>{{ level.title }}</h1>
+  </div>
+  <div class="prose">{{ lesson_html }}</div>
+  <div class="lesson-nav">
+    {% if prev_number %}<a class="btn btn-ghost" href="{% url 'level' prev_number %}">← Level {{ prev_number }}</a>{% else %}<span></span>{% endif %}
+    {% if next_number %}<a class="btn btn-ghost" href="{% url 'level' next_number %}">Level {{ next_number }} →</a>{% endif %}
+  </div>
+</section>
+
+<!-- ============ Exercise ============ -->
+<section class="exercise">
+  <div class="panel">
+    <div class="panel-head">
+      <h2>✏️ Exercise</h2>
+      <div class="stats">
+        <span>Incorrect: <b id="stat-wrong">0</b></span>
+        <span>Hints: <b id="stat-hints">0 / 3</b></span>
+      </div>
+    </div>
+    <div class="prose instructions">{{ instructions_html }}</div>
+
+    <div class="editor" aria-label="Code editor - type the missing lines">
+      <div class="editor-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="filename">main.py</span></div>
+      <div class="editor-body">
+        {% for row in rows %}
+          {% if row.blank %}
+          <div class="code-row blank" data-line="{{ row.n }}">
+            <span class="ln">{{ row.n }}</span>
+            <span class="indent">{{ row.indent }}</span>
+            <input class="blank-input" type="text" data-index="{{ row.blank_index }}"
+                   placeholder="Type missing line {{ row.blank_index|add:1 }} here…"
+                   spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off">
+          </div>
+          {% else %}
+          <div class="code-row" data-line="{{ row.n }}">
+            <span class="ln">{{ row.n }}</span>
+            <code class="language-python static-line">{% if row.text %}{{ row.text }}{% else %} {% endif %}</code>
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="io-row">
+      <div class="stdin-wrap">
+        <label for="stdin">Input <span class="muted">(values for <code>input()</code>, one per line)</span></label>
+        <textarea id="stdin" rows="3" spellcheck="false">{{ sample_stdin }}</textarea>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="run-btn" class="btn btn-secondary" disabled title="Ctrl+Enter">▶ Run</button>
+      <button id="submit-btn" class="btn btn-primary">✓ Submit</button>
+      <button id="hint-btn" class="btn btn-hint">💡 Hint (3 left)</button>
+      <span id="py-status" class="muted py-status"></span>
+    </div>
+
+    <div class="console">
+      <div class="console-head">Output</div>
+      <pre id="output" class="console-body">Press ▶ Run to try your code.</pre>
+    </div>
+
+    <div id="level-done" class="level-done" hidden>
+      <span id="level-done-text"></span>
+      {% if next_number %}
+        <a class="btn btn-primary" href="{% url 'level' next_number %}">Next: Level {{ next_number }} →</a>
+      {% else %}
+        <a class="btn btn-primary" href="{% url 'report' %}">🏆 See your grade</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h2>🧑‍🏫 Tutor</h2></div>
+    <div id="tutor-feed" class="tutor-feed">
+      <div class="msg msg-info"><div class="msg-body">Fill in the missing lines, press <b>▶ Run</b> to test, then <b>✓ Submit</b>. I'll help if you get stuck.</div></div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{{ rows|json_script:"rows-data" }}
+<script>
+  document.querySelectorAll(".static-line").forEach((el) => window.hljs && hljs.highlightElement(el));
+  window.LEVEL_CONFIG = {
+    number: {{ level.number }},
+    levelNumbers: [{% for n in level_numbers %}{{ n }}{% if not forloop.last %},{% endif %}{% endfor %}],
+    maxHints: 3,
+    rows: JSON.parse(document.getElementById("rows-data").textContent),
+    workerUrl: "{% static 'js/py-worker.js' %}",
+    harnessUrl: "{% static 'py/harness.py' %}",
+  };
+</script>
+<script src="{% static 'js/level.js' %}"></script>
+{% endblock %}

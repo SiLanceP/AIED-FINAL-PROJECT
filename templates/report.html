@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Report{% endblock %}
+{% block content %}
+<section class="panel narrow report">
+  <h1>🏆 Your Report</h1>
+  <div class="grade-wrap">
+    <div id="grade" class="grade">–</div>
+    <div>
+      <p id="grade-reason" class="grade-reason">Loading…</p>
+      <p class="muted">Total hints: <b id="total-hints">0</b> · Incorrect attempts: <b id="total-wrong">0</b></p>
+    </div>
+  </div>
+
+  <table class="table">
+    <thead><tr><th>Level</th><th>Topic</th><th>Status</th><th>Hints</th><th>Incorrect</th></tr></thead>
+    <tbody id="level-rows"></tbody>
+  </table>
+
+  <div id="summary-box" class="msg msg-explain" hidden>
+    <div class="msg-title">Tutor feedback <span id="summary-src" class="src"></span></div>
+    <div id="summary" class="msg-body"></div>
+  </div>
+
+  <div class="actions">
+    <a class="btn btn-ghost" href="{% url 'home' %}">← Back to levels</a>
+    <button type="button" class="btn btn-danger" data-reset-progress>↺ Reset progress and start over</button>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+  window.LEVEL_NUMBERS = [{% for l in levels %}{{ l.number }}{% if not forloop.last %},{% endif %}{% endfor %}];
+  window.LEVEL_TITLES = { {% for l in levels %}{{ l.number }}: "{{ l.title|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %} };
+</script>
+<script src="{% static 'js/report.js' %}"></script>
+{% endblock %}

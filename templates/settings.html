@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}AI Settings{% endblock %}
+{% block content %}
+<section class="panel narrow">
+  <h1>🤖 AI Tutor Settings</h1>
+  <p class="muted">Choose where the AI tutor runs. Every option here is <b>free</b>. If the AI can't be reached,
+     the tutor automatically uses its built-in hints, so the lessons always work.</p>
+
+  <div class="form">
+    <label for="provider">Provider</label>
+    <select id="provider">
+      <optgroup label="Online (free tier, needs internet + API key)">
+        {% for key, p in presets.items %}{% if p.kind == "cloud" %}<option value="{{ key }}">{{ p.label }}</option>{% endif %}{% endfor %}
+      </optgroup>
+      <optgroup label="Local (runs on this computer)">
+        {% for key, p in presets.items %}{% if p.kind == "local" %}<option value="{{ key }}">{{ p.label }}</option>{% endif %}{% endfor %}
+      </optgroup>
+      <optgroup label="Off">
+        <option value="none">{{ presets.none.label }}</option>
+      </optgroup>
+    </select>
+
+    <div data-show="cloud local">
+      <label for="model">Model <span class="muted">(leave empty for the default)</span></label>
+      <input id="model" type="text" list="model-list" autocomplete="off" spellcheck="false">
+      <datalist id="model-list"></datalist>
+    </div>
+
+    <div data-show="cloud">
+      <label for="api_key">API key</label>
+      <input id="api_key" type="password" autocomplete="off" placeholder="Paste your free API key">
+      <p class="muted small" id="server-key-note" hidden>✓ The server already has a key for this provider in its <code>.env</code> file, so you can leave this empty.</p>
+      <p class="muted small">Your key is stored only in this browser and sent to this tutor's server when asking for hints.</p>
+    </div>
+
+    <div data-show="local">
+      <label for="base_url">Server URL <span class="muted">(leave empty for the default)</span></label>
+      <input id="base_url" type="text" spellcheck="false">
+      <div class="callout">
+        <b>Recommended for computers with 8–16 GB RAM and 4 GB+ VRAM.</b><br>
+        Ollama quick start: install Ollama, then run <code>ollama pull qwen2.5-coder:7b</code>
+        (or <code>llama3.2:3b</code> for slower computers). For LM Studio, load a model and start the local server.
+      </div>
+    </div>
+
+    <p data-show="cloud local"><a id="key-link" target="_blank" rel="noopener">Get a free API key</a></p>
+
+    <div class="actions">
+      <button id="save-btn" class="btn btn-primary">Save</button>
+      <button id="test-btn" class="btn btn-secondary">Test connection</button>
+    </div>
+    <div id="result" class="result"></div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/settings.js' %}"></script>{% endblock %}
