@@ -23,6 +23,26 @@
     };
   }
 
+  function populateModels(models, activeModel) {
+    const list = $("model-list");
+    list.innerHTML = (models || []).map((m) => `<option value="${escapeHtml(m)}">`).join("");
+    if (!modelIn.value && activeModel) {
+      modelIn.value = activeModel;
+    }
+  }
+
+  async function autoFetchLocalModels() {
+    const p = presets[providerSel.value];
+    if (p.kind !== "local") return;
+    try {
+      const qs = new URLSearchParams({ provider: providerSel.value, base_url: urlIn.value.trim() });
+      const res = await fetch(`/api/ai/models/?${qs}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      populateModels(data.models, data.active_model);
+    } catch (_) { /* ignore on initial load */ }
+  }
+
   function render() {
     const p = presets[providerSel.value];
     document.querySelectorAll("[data-show]").forEach((el) => {
@@ -33,6 +53,7 @@
     $("key-link").href = p.key_url;
     $("key-link").textContent = p.kind === "local" ? `Download ${p.label.split(" (")[0]}` : "Get a free API key";
     $("server-key-note").hidden = !p.server_has_key;
+    autoFetchLocalModels();
   }
 
   providerSel.addEventListener("change", () => { modelIn.value = ""; render(); });
@@ -54,10 +75,10 @@
       const res = await api("/api/ai/test/", { ai: current() });
       $("result").className = `result ${res.ok ? "ok" : "bad"}`;
       $("result").textContent = res.message;
-      const list = $("model-list");
-      list.innerHTML = (res.models || []).map((m) => `<option value="${escapeHtml(m)}">`).join("");
-      if (res.models && res.models.length) {
-        $("result").textContent += ` (${res.models.length} models available - pick one from the Model box suggestions)`;
+      populateModels(res.models, res.active_model);
+      if (res.ok) {
+        AISettings.save(current());
+        $("result").textContent += " (Saved ✓)";
       }
     } catch (err) {
       $("result").className = "result bad";

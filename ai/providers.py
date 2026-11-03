@@ -98,8 +98,22 @@ def _is_local_url(url):
 
 
 def default_provider():
-    p = os.getenv("DEFAULT_AI_PROVIDER", "gemini")
-    return p if p in PRESETS else "gemini"
+    p = os.getenv("DEFAULT_AI_PROVIDER", "ollama")
+    return p if p in PRESETS else "ollama"
+
+
+def _normalize_base_url(url, kind):
+    url = (url or "").strip().rstrip("/")
+    if kind == "local" and url and not url.endswith("/v1"):
+        url = url + "/v1"
+    return url
+
+
+def _list_models(cfg):
+    try:
+        return sorted(m.id for m in _client(cfg).models.list())[:100]
+    except OpenAIError:
+        return []
 
 
 def resolve_config(user_settings=None):
@@ -112,11 +126,13 @@ def resolve_config(user_settings=None):
     if preset["kind"] == "none":
         return AIConfig(provider, "", "", "", "none")
 
-    model = (s.get("model") or "").strip() or os.getenv(f"{provider.upper()}_MODEL") or preset["model"]
+    user_model = (s.get("model") or "").strip() or os.getenv(f"{provider.upper()}_MODEL")
+    model = user_model or preset["model"]
 
     if preset["kind"] == "local":
         # Only local providers may change the URL, and only to a local/private address.
-        base_url = (s.get("base_url") or "").strip() or os.getenv(preset["env_key"]) or preset["base_url"]
+        raw_url = (s.get("base_url") or "").strip() or os.getenv(preset["env_key"]) or preset["base_url"]
+        base_url = _normalize_base_url(raw_url, "local")
         if not _is_local_url(base_url):
             raise AIUnavailable("Local AI URL must point to localhost or a private network address.")
         api_key = provider  # Ollama / LM Studio ignore the key, but the client requires one.
@@ -127,7 +143,22 @@ def resolve_config(user_settings=None):
             raise AIUnavailable(
                 f"No API key for {preset['label']}. Add one in AI Settings or in the server .env file."
             )
-    return AIConfig(provider, model, base_url, api_key, preset["kind"])
+    cfg = AIConfig(provider, model, base_url, api_key, preset["kind"])
+    # For local providers: if the user left Model blank (or the default isn't installed),
+    # automatically pick an installed model so it works out of the box.
+    if cfg.kind == "local":
+        installed = _list_models(cfg)
+        if installed and cfg.model not in installed:
+            if not user_model:
+                # Prefer a larger instruct/coder model if available, otherwise first installed
+                preferred = [m for m in installed if "7b" in m.lower() or "coder" in m.lower()]
+                cfg.model = preferred[-1] if preferred else installed[0]
+            else:
+                raise AIUnavailable(
+                    f"Model '{cfg.model}' is not installed in {preset['label']}. "
+                    f"Installed models: {', '.join(installed)}"
+                )
+    return cfg
 
 
 _THINK_RE = re.compile(r"<think>.*?</think>", re.DOTALL | re.IGNORECASE)
@@ -165,17 +196,14 @@ def test_connection(user_settings):
     """Check settings by listing models (if supported) and sending a tiny prompt."""
     cfg = resolve_config(user_settings)
     if cfg.kind == "none":
-        return {"ok": True, "message": "AI is turned off. Built-in hints will be used.", "models": []}
-    models = []
-    try:
-        models = sorted(m.id for m in _client(cfg).models.list())[:100]
-    except OpenAIError:
-        pass  # some providers don't allow listing; the chat test below is what matters
-    reply, _ = chat(user_settings, "You are a test endpoint.", "Reply with exactly: OK", max_tokens=20)
+        return {"ok": True, "message": "AI is turned off. Built-in hints will be used.", "models": [], "active_model": ""}
+    models = _list_models(cfg)
+    reply, cfg = chat(user_settings, "You are a test endpoint.", "Reply with exactly: OK", max_tokens=20)
     return {
         "ok": True,
         "message": f"Connected to {PRESETS[cfg.provider]['label']} using model '{cfg.model}'. Reply: {reply[:60]}",
         "models": models,
+        "active_model": cfg.model,
     }
 
 

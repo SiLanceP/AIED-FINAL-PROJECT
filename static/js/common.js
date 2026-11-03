@@ -67,11 +67,18 @@
   }
 
   async function api(url, body) {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken() },
-      body: JSON.stringify(body || {}),
-    });
+    let res;
+    try {
+      res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken() },
+        body: JSON.stringify(body || {}),
+      });
+    } catch (err) {
+      throw new Error(
+        "Could not reach the Django server (" + err.message + "). Make sure the server is running and open http://127.0.0.1:8000."
+      );
+    }
     let data = {};
     try { data = await res.json(); } catch (_) { /* non-JSON error page */ }
     if (!res.ok) throw new Error(data.error || data.message || `Server error (${res.status})`);
