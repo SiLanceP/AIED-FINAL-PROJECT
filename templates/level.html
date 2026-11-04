@@ -18,10 +18,6 @@
     <h1>{{ level.title }}</h1>
   </div>
   <div class="prose">{{ lesson_html }}</div>
-  <div class="lesson-nav">
-    {% if prev_number %}<a class="btn btn-ghost" href="{% url 'level' prev_number %}">← Level {{ prev_number }}</a>{% else %}<span></span>{% endif %}
-    {% if next_number %}<a class="btn btn-ghost" href="{% url 'level' next_number %}">Level {{ next_number }} →</a>{% endif %}
-  </div>
 </section>
 
 <!-- ============ Exercise ============ -->

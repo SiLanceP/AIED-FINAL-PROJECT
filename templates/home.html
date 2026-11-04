@@ -30,20 +30,6 @@
   </article>
   {% endfor %}
 </section>
-
-<section class="grading-info">
-  <h3>How you are graded</h3>
-  <table class="table">
-    <thead><tr><th>Grade</th><th>Condition (all 5 levels)</th></tr></thead>
-    <tbody>
-      <tr><td><b>A</b></td><td>No hints and no incorrect attempts</td></tr>
-      <tr><td><b>B+</b></td><td>1–5 hints (or no hints but some incorrect attempts)</td></tr>
-      <tr><td><b>B</b></td><td>6–9 hints</td></tr>
-      <tr><td><b>C</b></td><td>10–12 hints</td></tr>
-      <tr><td><b>D</b></td><td>13–15 hints, or a solution had to be shown</td></tr>
-    </tbody>
-  </table>
-</section>
 {% endblock %}
 {% block scripts %}
 <script>window.LEVEL_NUMBERS = [{% for l in levels %}{{ l.number }}{% if not forloop.last %},{% endif %}{% endfor %}];</script>
