@@ -12,7 +12,7 @@
     $("grade").dataset.grade = res.grade || "none";
     $("grade-reason").textContent = res.reason;
     $("total-points").textContent = `${res.total_points ?? 0} / ${res.max_points ?? 12}`;
-    $("total-hints").textContent = res.total_hints;
+    $("total-hints").textContent = `${res.total_hints} / ${res.max_total_hints ?? 36}`;
     $("total-wrong").textContent = res.total_wrong;
 
     $("level-rows").innerHTML = res.levels.map((r) => {
@@ -20,7 +20,7 @@
       return `<tr><td>Level ${r.level}</td><td>${escapeHtml(window.LEVEL_TITLES[r.level] || "")}</td>
         <td><span class="badge" data-status="${status}">${STATUS_LABELS[status] || status}</span></td>
         <td><b>${r.points ?? 0} / ${r.max_points ?? 4}</b></td>
-        <td>${r.hints} / 3</td><td>${r.wrong}</td></tr>`;
+        <td>${r.hints} / ${r.max_hints ?? 12}</td><td>${r.wrong}</td></tr>`;
     }).join("");
 
     if (res.complete) {

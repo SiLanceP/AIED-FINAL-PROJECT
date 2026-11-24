@@ -5,7 +5,7 @@
 <section class="hero">
   <h1>Learn Python, one level at a time</h1>
   <p>Read a beginner-friendly lesson, then complete <b>4 short exercises per level</b> (<b>12 points total</b>) right in your browser.
-     Stuck? Your AI tutor gives up to <b>3 hints per level</b>.</p>
+     Stuck? Your AI tutor gives up to <b>3 hints per exercise</b>.</p>
   <div class="progress">
     <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
     <span id="progress-text" class="muted"></span>
@@ -33,5 +33,5 @@
 {% endblock %}
 {% block scripts %}
 <script>window.LEVEL_NUMBERS = [{% for l in levels %}{{ l.number }}{% if not forloop.last %},{% endif %}{% endfor %}];</script>
-<script src="{% static 'js/home.js' %}?v=3"></script>
+<script src="{% static 'js/home.js' %}?v=7"></script>
 {% endblock %}

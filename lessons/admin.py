@@ -15,6 +15,7 @@ class ExerciseInline(admin.StackedInline):
         "stdin_cases",
         "constraints",
         "static_hints",
+        "pass_explanation",
     )
 
 

@@ -34,7 +34,21 @@
     exercise(levelN, exN) {
       const lv = this.level(levelN);
       const ex = (lv.exercises && lv.exercises[String(exN)]) || {};
-      return { status: null, wrong: 0, answers: [], hintLog: [], revealed: null, ...ex };
+      const hintLog = Array.isArray(ex.hintLog) ? ex.hintLog : [];
+      const hints = typeof ex.hints === "number" ? ex.hints : hintLog.length;
+      const wrongAfterHints = typeof ex.wrongAfterHints === "number" ? ex.wrongAfterHints : 0;
+      return { status: null, wrong: 0, wrongAfterHints, hints, answers: [], hintLog, revealed: null, ...ex, hints, wrongAfterHints };
+    },
+    levelHints(levelN, exCount) {
+      const lv = this.level(levelN);
+      const exMap = lv.exercises || {};
+      let total = 0;
+      for (let i = 1; i <= (exCount || 4); i++) {
+        const ex = exMap[String(i)] || {};
+        if (typeof ex.hints === "number") total += ex.hints;
+        else if (Array.isArray(ex.hintLog)) total += ex.hintLog.length;
+      }
+      return total;
     },
     update(n, patch) {
       const data = this.load();

@@ -17,7 +17,7 @@ Students learn fundamental Python programming across **3 beginner-friendly level
   - Supports `input()` via the **Input** box (one value per line).
 - **Constraint-Based Grading + Tutor Flow:**
   - Checks AST rules (`must_call`, `must_use`, `must_assign`) + program output across multiple test inputs, allowing multiple valid solutions.
-  - **Minimal Feedback** on the first 1–2 mistakes → **Up to 3 Escalating AI Hints per level** → **Solution Review** (explains the student's mistake, reveals the working code, and marks the level as incorrect) if the student still gets it wrong after all 3 hints.
+  - **Minimal Feedback** on the first 1–2 mistakes → **Up to 3 Escalating AI Hints per exercise** → **Solution Review** (explains the student's mistake, reveals the working code, and marks the exercise as incorrect) the moment the student still gets it wrong after exhausting all 3 hints.
 - **Switchable AI Backend (Online or Local) + Built-in Fallback:**
   - Switch anytime on the **AI Settings** page between **Ollama**, **LM Studio**, **Google Gemini**, **Groq**, **OpenRouter**, or **No AI (built-in hints)**.
 - **No Login Required:**
@@ -55,7 +55,7 @@ Students learn fundamental Python programming across **3 beginner-friendly level
    pip install -r requirements.txt
    ```
 
-4. **Apply database migrations (this also seeds all 5 levels and exercises):**
+4. **Apply database migrations (this also seeds all 3 levels and exercises):**
    ```bash
    python manage.py migrate
    ```
@@ -160,15 +160,15 @@ If you want the server to have a default API key so students don't need to paste
 5. **Check with ✓ Submit:**
    - Click **✓ Submit** to grade your code against all test cases and constraints.
    - **1st–2nd mistake:** The tutor gives short feedback (syntax line, missing function/loop constraint, or output comparison).
-   - **Need help?** Click **💡 Hint** (up to **3 hints per level**). Each hint gets more specific without giving away the answer.
-   - **Still wrong after all 3 hints?** Submitting an incorrect answer after using all 3 hints triggers **Solution Review**: the AI explains your mistake, fills in the working solution, and marks the level as `Solution shown` so you can move on to the next level.
+   - **Need help?** Click **💡 Hint** (up to **3 hints per exercise** — 12 per level, 36 max). Each hint gets more specific without giving away the answer.
+   - **Still wrong after all 3 hints?** Submitting an incorrect answer after exhausting all 3 hints immediately triggers **Solution Review**: the AI explains your mistake, fills in the working solution, and marks the exercise as `Solution shown` (0 pts) so you can move on.
 6. **View Your Grade (`Report` page):**
-   - Finish all 3 levels (12 exercises / 12 points total) and click **Report** (or **🏆 See your grade**) to see your 12-point score, final grade, and personalized AI feedback:
-     - **A:** 12/12 points, 0 hints used, and 0 incorrect attempts across all 3 levels
-     - **B+:** 1–5 hints used (or 0 hints with some incorrect attempts)
-     - **B:** 6–9 hints used
-     - **C:** 10–12 hints used
-     - **D:** 13+ hints used, or any exercise ended with the solution revealed
+   - Finish all 3 levels (12 exercises / 12 points total, 3 hints per exercise = 36 hints max) and click **Report** (or **🏆 See your grade**) to see your 12-point score, final grade, and personalized AI feedback:
+     - **A:** 12/12 points, 0 hints used, and 0 incorrect attempts across all 12 exercises
+     - **B+:** 1–12 hints used (or 0 hints with some incorrect attempts)
+     - **B:** 13–21 hints used
+     - **C:** 22–29 hints used
+     - **D:** 30–36 hints used, or any exercise ended with a solution reveal
 7. **Reset Anytime:** Click **↺ Reset Progress** in the top navigation bar to clear your browser's saved progress and start fresh from Level 1.
 
 ---

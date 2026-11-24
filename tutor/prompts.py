@@ -40,12 +40,15 @@ def _context(exercise, answers, result):
         for i, ln in enumerate(exercise.blank_line_numbers)
     )
     solution = "\n".join(f"Missing line {i + 1}: {s}" for i, s in enumerate(exercise.solution_lines))
+    constraints_note = ""
+    if exercise.constraints:
+        constraints_note = f"\nREQUIRED CONSTRAINTS (must be followed): {exercise.constraints}\n"
     return f"""LESSON: Level {exercise.level.number} - {exercise.level.title} ({exercise.level.topic})
 EXERCISE {exercise.number}: {exercise.title}
 
 TASK:
 {exercise.instructions_markdown}
-
+{constraints_note}
 CODE TEMPLATE (____ marks a missing line):
 {_numbered(exercise.template_code)}
 
@@ -79,17 +82,28 @@ The student has used all hints and is still wrong. In at most 5 short sentences:
 Do not repeat the full code - it will be shown separately."""
 
 
+def pass_prompt(exercise, answers, result):
+    return f"""{_context(exercise, answers, result)}
+
+MODE: PASS_EXPLANATION
+The student just solved this exercise correctly! In 2-3 short, encouraging sentences for a complete beginner,
+explain WHY their specific line(s) of code worked and reinforce the Python concept they just practiced."""
+
+
 def report_prompt(grade_info, level_titles):
     lines = []
     for row in grade_info["levels"]:
         lines.append(
             f"Level {row['level']} ({level_titles.get(row['level'], '')}): status={row['status']}, "
             f"points={row.get('points', 0)}/{row.get('max_points', 4)}, "
-            f"hints={row['hints']}, incorrect attempts={row['wrong']}"
+            f"hints={row['hints']}/{row.get('max_hints', 12)}, "
+            f"solution reveals={row.get('reveals', 0)}, incorrect attempts={row['wrong']}"
         )
-    return f"""A student finished a 3-level beginner Python tutorial (12 points total, 4 exercises per level). Their results:
+    return f"""A student finished a 3-level beginner Python tutorial (12 points total, 4 exercises per level, 3 hints per exercise = 36 hints max). Their results:
 {chr(10).join(lines)}
 Total Score: {grade_info.get('total_points', 0)} / {grade_info.get('max_points', 12)} points
+Total Hints: {grade_info.get('total_hints', 0)} / {grade_info.get('max_total_hints', 36)}
+Total Solution Reveals: {grade_info.get('total_reveals', 0)} / {grade_info.get('max_points', 12)}
 Grade: {grade_info['grade']} ({grade_info['reason']})
 
 In 3-4 short sentences: congratulate them, name the topic(s) they struggled with most

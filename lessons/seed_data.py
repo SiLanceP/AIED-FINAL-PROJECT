@@ -56,9 +56,10 @@ Line 2
 
 ### Printing numbers & combining items with a comma `,`
 
-* **Numbers** do **not** need quotes:
+* **Numbers** can be printed as text inside quotes (`print("2026")`) **or** as whole numbers without quotes (`print(100)`). Putting quotes around digits makes it a **string (text)**; leaving off quotes makes it a **number (integer)**:
   ```python
-  print(100)
+  print("2026")   # prints text
+  print(100)      # prints a number
   ```
 * You can print **words and numbers together** in one `print()` by separating them with a **comma `,`**. Python automatically puts a space between them:
   ```python
@@ -85,7 +86,7 @@ Line 2
                 "instructions_markdown": """
 **(1 point)** Let's make Python say hello! The top and bottom decorative lines are already written for you.
 
-* **Missing line 1:** Use `print()` to display the exact text `Hello, Python!`
+* **Missing line 1:** Use `print()` to display the text `"Hello, Python!"`
 """,
                 "template_code": (
                     'print("--------------------")\n'
@@ -94,12 +95,16 @@ Line 2
                 ),
                 "solution_lines": ['print("Hello, Python!")'],
                 "stdin_cases": [""],
-                "constraints": {"must_call": ["print"]},
+                "constraints": {"must_call": ["print"], "print_arg_types": ["str"]},
                 "static_hints": [
-                    "Use the print() command, and put the text you want to show inside quotes.",
-                    "Look at lines 1 and 3 for an example of how print() is written. Replace the dashes with the text from the instructions.",
-                    'Type print("Hello, Python!") — check the capital H, capital P, the comma, and the exclamation mark!',
+                    "Use the `print()` command, and wrap the text you want to show inside quotation marks.",
+                    "Look at lines 1 and 3 for an example of how `print()` is written. Your line goes in between them.",
+                    "Start with `print(`, put the text from the instructions inside double quotes `\"...\"`, and close it with `)`.",
                 ],
+                "pass_explanation": (
+                    "Great job! Putting text inside quotation marks (`\"...\"`) tells Python it is a **string** (text), "
+                    "and `print()` displays it right between the top and bottom border lines."
+                ),
             },
             {
                 "number": 2,
@@ -118,33 +123,47 @@ Line 2
                 ),
                 "solution_lines": ['print("Hello, World!")', 'print("I am coding in Python.")'],
                 "stdin_cases": [""],
-                "constraints": {"must_call": ["print"]},
+                "constraints": {"must_call": ["print"], "print_arg_types": ["str"]},
                 "static_hints": [
-                    "Each missing line needs its own print() command with text inside quotation marks.",
-                    "Missing line 1 prints the greeting, and missing line 2 prints the sentence about coding in Python.",
-                    'Line 2 needs print("Hello, World!") and Line 3 needs print("I am coding in Python.") — don\'t forget the period at the end!',
+                    "Each missing line needs its own `print()` command with text wrapped inside quotation marks.",
+                    "Missing line 1 (line 2) prints the greeting, and missing line 2 (line 3) prints the sentence about coding in Python.",
+                    "Follow the pattern `print(\"...\")` on both lines: first for the Hello World greeting, then for the Python sentence.",
                 ],
+                "pass_explanation": (
+                    "Well done! Python runs your code from **top to bottom**, one line at a time, and each `print()` "
+                    "command automatically starts on its own new line."
+                ),
             },
             {
                 "number": 3,
-                "title": "Printing a Number",
+                "title": "Printing a Year as Text",
                 "instructions_markdown": """
-**(1 point)** You can also print numbers! Remember: whole numbers don't need quotes.
+**(1 point)** Display the current year as **text (a string)** inside quotation marks `" "`.
 
-* **Missing line 1:** Use `print()` to display the number `2026`
+* **Missing line 1:** Use `print()` with quotes `" "` around `2026` to display `"2026"`
 """,
                 "template_code": (
                     'print("The current year is:")\n'
                     "____"
                 ),
-                "solution_lines": ["print(2026)"],
+                "solution_lines": ['print("2026")'],
                 "stdin_cases": [""],
-                "constraints": {"must_call": ["print"]},
+                "constraints": {
+                    "must_call": ["print"],
+                    "print_arg_types": ["str"],
+                    "messages": {
+                        "print_arg_types": 'Remember to put quotation marks `" "` around `"2026"` inside `print()` so it is printed as text.',
+                    },
+                },
                 "static_hints": [
-                    "Put the number inside the parentheses of print().",
-                    "You just need the command print( followed by the number 2026 and a closing ).",
-                    "Write print( followed by 2026 and ) on the missing line.",
+                    "Use `print()` with quotation marks around the year so Python treats it as text.",
+                    "Look at line 1 (`print(\"The current year is:\")`). Do the same thing on line 2, with `2026` inside the quotes.",
+                    "Write `print(` followed by `2026` wrapped in double quotes `\"...\"`, then close with `)`.",
                 ],
+                "pass_explanation": (
+                    "Nice! Wrapping `\"2026\"` in quotation marks turns those digits into a **string** (text) instead of a "
+                    "math number, and `print()` shows it on the screen."
+                ),
             },
             {
                 "number": 4,
@@ -152,7 +171,7 @@ Line 2
                 "instructions_markdown": """
 **(1 point)** Use a comma `,` inside `print()` to display text and a number on the **same line**.
 
-* **Missing line 1:** Use `print()` with two items separated by a comma: the text `"Level:"` and the number `1`
+* **Missing line 1:** Use `print()` with **two items** separated by a comma: the text `"Level:"` (in quotes) and the whole number `1` (no quotes)
 
 Expected output:
 ```text
@@ -166,12 +185,22 @@ Level: 1
                 ),
                 "solution_lines": ['print("Level:", 1)'],
                 "stdin_cases": [""],
-                "constraints": {"must_call": ["print"]},
+                "constraints": {
+                    "must_call": ["print"],
+                    "print_arg_types": ["str", "int"],
+                    "messages": {
+                        "print_arg_types": 'Pass two items separated by a comma inside `print()`: the text `"Level:"` in quotes, then a comma `,`, then the whole number `1` without quotes.',
+                    },
+                },
                 "static_hints": [
-                    "Look at line 1: it separates two items inside print() using a comma.",
-                    'Your first item inside print() should be "Level:" in quotes, then a comma, then the number 1.',
-                    'Type print("Level:", followed by 1 and the closing ) — Python will automatically put a space after the colon.',
+                    "Look at line 1: it puts two items inside `print()` separated by a comma `,`.",
+                    'Your first item inside `print()` should be the text `"Level:"` in quotes, followed by a comma, then the number `1` without quotes.',
+                    "Follow the pattern `print(\"...\", number)` — put the level label in quotes first, a comma, then the number `1`.",
                 ],
+                "pass_explanation": (
+                    "Awesome! Separating items with a **comma `,`** inside `print()` lets you mix text (`\"Level:\"`) "
+                    "and a whole number (`1`) on the same line, with Python automatically adding a space between them."
+                ),
             },
         ],
     },
@@ -265,12 +294,16 @@ Welcome to Manila
                 ),
                 "solution_lines": ['city = "Manila"'],
                 "stdin_cases": [""],
-                "constraints": {"must_assign": ["city"]},
+                "constraints": {"must_assign": ["city"], "assign_types": {"city": "str"}},
                 "static_hints": [
-                    "Create a variable by writing variable_name = value.",
-                    'The variable name must be city (all lowercase) and the value is the text "Manila" in quotes.',
-                    'Write city = followed by "Manila" in quotation marks.',
+                    "Create a variable by writing `variable_name = value`.",
+                    "The variable name on the left of `=` must be `city` (all lowercase), and the value on the right is text inside quotes.",
+                    "Follow the pattern `city = \"...\"` using the city name from the instructions.",
                 ],
+                "pass_explanation": (
+                    "Great work! The `=` sign saved the string `\"Manila\"` inside the `city` variable, so when "
+                    "`print(\"Welcome to\", city)` ran on line 3, Python looked inside `city` and printed its value."
+                ),
             },
             {
                 "number": 2,
@@ -299,12 +332,19 @@ Student: True
                 ),
                 "solution_lines": ["age = 17", "is_student = True"],
                 "stdin_cases": [""],
-                "constraints": {"must_assign": ["age", "is_student"]},
+                "constraints": {
+                    "must_assign": ["age", "is_student"],
+                    "assign_types": {"age": "int", "is_student": "bool"},
+                },
                 "static_hints": [
                     "Look at line 1 (`name = \"Ana\"`). You will use `=` in the same way, except numbers and booleans do NOT use quotes.",
-                    "Missing line 1 sets age to 17. Missing line 2 sets is_student to True (make sure T is uppercase).",
-                    "On line 2 type age = 17 (without quotes) and on line 3 type is_student = True (capital T, without quotes).",
+                    "Missing line 1 (line 2) sets `age` to a whole number without quotes. Missing line 2 (line 3) sets `is_student` to a boolean (`True` with a capital `T`, no quotes).",
+                    "Follow `age = ____` (whole number) on line 2 and `is_student = ____` (capitalized boolean, no quotes) on line 3.",
                 ],
+                "pass_explanation": (
+                    "Spot on! Leaving off the quotes stored `17` as a real **integer** (so you could do math with it) "
+                    "and `True` (with a capital `T`) as a **boolean** yes/no value."
+                ),
             },
             {
                 "number": 3,
@@ -330,12 +370,16 @@ Pesos: 120
                 ),
                 "solution_lines": ['print("Order:", food)', 'print("Pesos:", price)'],
                 "stdin_cases": [""],
-                "constraints": {"must_call": ["print"]},
+                "constraints": {"must_call": ["print"], "must_ref": ["food", "price"]},
                 "static_hints": [
-                    'When you want print() to show what is inside a variable, write the variable name WITHOUT quotes, like print("Label:", variable_name).',
-                    'Missing line 1 prints "Order:" and food. Missing line 2 prints "Pesos:" and price.',
-                    'Use print("Order:", food) on line 4 and print("Pesos:", price) on line 5 — do not put quotes around food or price.',
+                    'When you want `print()` to show what is inside a variable, write the variable name WITHOUT quotes, like `print("Label:", variable_name)`.',
+                    'Missing line 1 (line 4) prints the `"Order:"` label and the `food` variable. Missing line 2 (line 5) prints the `"Pesos:"` label and the `price` variable.',
+                    "Follow `print(\"Order:\", ____)` on line 4 and `print(\"Pesos:\", ____)` on line 5 using the variable names `food` and `price` (no quotes around them).",
                 ],
+                "pass_explanation": (
+                    "Nice job! Writing `food` and `price` **without quotes** told Python to open those variables and "
+                    "print their stored values (`Adobo` and `120`) instead of printing the words `food` and `price`."
+                ),
             },
             {
                 "number": 4,
@@ -358,12 +402,20 @@ Total bill: 115
                 ),
                 "solution_lines": ["total = burger + drink"],
                 "stdin_cases": [""],
-                "constraints": {"must_assign": ["total"]},
+                "constraints": {
+                    "must_assign": ["total"],
+                    "must_ref": ["burger", "drink"],
+                    "must_add": True,
+                },
                 "static_hints": [
-                    "You want to create a variable named total using = and the + operator.",
-                    "Add the two variable names burger and drink on the right side of total = ...",
-                    "Write total = followed by burger + drink on the missing line.",
+                    "Create a variable named `total` using `=`, and add the two existing variables with `+`.",
+                    "Put `total` on the left of `=`, and add the variable names `burger` and `drink` on the right (don't just type `115`).",
+                    "Follow the pattern `total = ____ + ____` using the two variable names from lines 1 and 2.",
                 ],
+                "pass_explanation": (
+                    "Excellent! Python read `burger` (`85`) and `drink` (`30`), added them with `+`, and saved `115` "
+                    "in `total`. Using variable names means your bill stays accurate even if the prices change!"
+                ),
             },
         ],
     },
@@ -389,7 +441,7 @@ name = input()
 print("Hello,", name)
 ```
 
-1. **`input()`** — reads a line of text typed by the user (in this tutor, sample test inputs are fed in automatically when you press **▶ Run** and **✓ Submit**).
+1. **`input()`** — pauses the program and waits for the user to type a value right inside the **Output** terminal below (press **Enter** after typing!).
 2. **`name = ...`** — saves whatever the user typed into the variable `name`.
 3. **`print("Hello,", name)`** — greets the user using the name they typed!
 
@@ -452,10 +504,14 @@ Hello, Ana
                 "stdin_cases": ["Ana", "Marco", "Liza"],
                 "constraints": {"must_call": ["input"], "must_assign": ["name"]},
                 "static_hints": [
-                    "You need to call the input() function and store its result in a variable named name.",
-                    "Use the = sign: put the variable name on the left and the input() call on the right.",
-                    "Write name = followed by input() on the missing line.",
+                    "Call the `input()` function and save its result into a variable named `name`.",
+                    "Use the `=` sign: put the variable name on the left and the `input()` call on the right.",
+                    "Follow the pattern `____ = input()` using the variable name `name`.",
                 ],
+                "pass_explanation": (
+                    "Great job! `input()` paused the program to read whatever name the user typed, and `name = ...` "
+                    "saved it so line 3 could greet any user dynamically."
+                ),
             },
             {
                 "number": 2,
@@ -479,10 +535,14 @@ Ana likes blue
                 "stdin_cases": ["Ana\nblue", "Ben\ngreen", "Cara\nred"],
                 "constraints": {"must_call": ["input"], "must_assign": ["color"]},
                 "static_hints": [
-                    "Look at line 1 (`name = input()`). You need to do the same thing for the variable color.",
-                    "Store the result of input() into a variable named color.",
-                    "Type color = followed by input() on line 2.",
+                    "Look at line 1 (`name = input()`). Do the same thing on line 2 for the second variable.",
+                    "Store the result of `input()` into a variable named `color`.",
+                    "Follow the pattern `____ = input()` using the variable name `color` on line 2.",
                 ],
+                "pass_explanation": (
+                    "Nice! Each `input()` call waits for its own line of user input — line 1 captured `name`, "
+                    "and your second `input()` captured `color` so line 3 could combine both in one sentence."
+                ),
             },
             {
                 "number": 3,
@@ -505,12 +565,16 @@ Next year you will be 18
                 ),
                 "solution_lines": ["age = int(age_text)"],
                 "stdin_cases": ["17", "10", "25"],
-                "constraints": {"must_call": ["int"], "must_assign": ["age"]},
+                "constraints": {"must_call": ["int"], "must_assign": ["age"], "must_ref": ["age_text"]},
                 "static_hints": [
-                    "To turn a text variable into a whole number, pass it inside the int() function.",
-                    "Create a variable named age using = and pass age_text inside int(...).",
-                    "Write age = followed by int(age_text) on line 2.",
+                    "To turn a text variable into a whole number, pass it inside the `int()` function.",
+                    "Create a variable named `age` using `=`, and pass `age_text` inside `int(...)`.",
+                    "Follow the pattern `age = int(____)` using the text variable from line 1.",
                 ],
+                "pass_explanation": (
+                    "Well done! Because `input()` always returns text (`\"17\"`), wrapping `age_text` inside `int()` "
+                    "converted it into a real integer (`17`) so Python could safely calculate `age + 1`."
+                ),
             },
             {
                 "number": 4,
@@ -538,10 +602,14 @@ In 2026 you are 18
                 "stdin_cases": ["Ana\n2008", "Ben\n1999", "Carlo\n2015"],
                 "constraints": {"must_call": ["input", "int"], "must_assign": ["birth_year"]},
                 "static_hints": [
-                    "You need to create a variable named birth_year that reads input and converts it to an integer.",
-                    "Put input() inside int(...) so the text from input() is immediately turned into a number.",
-                    "Write birth_year = followed by int(input()) on line 2.",
+                    "Create a variable named `birth_year` that reads input and converts it to a whole number.",
+                    "Put `input()` directly inside `int(...)` so the typed text becomes a number immediately.",
+                    "Follow the pattern `____ = int(input())` using the variable name `birth_year` on line 2.",
                 ],
+                "pass_explanation": (
+                    "Fantastic! `int(input())` works from the inside out: `input()` reads the birth year as text, "
+                    "and `int(...)` immediately turns it into a number so line 4 can subtract it from `2026`."
+                ),
             },
         ],
     },
@@ -570,16 +638,19 @@ def seed(Level, Exercise):
         ex_numbers = [ex["number"] for ex in data["exercises"]]
         Exercise.objects.filter(level=level).exclude(number__in=ex_numbers).delete()
         for ex in data["exercises"]:
+            defaults = {
+                "title": ex["title"],
+                "instructions_markdown": ex["instructions_markdown"].strip(),
+                "template_code": ex["template_code"],
+                "solution_lines": ex["solution_lines"],
+                "stdin_cases": ex["stdin_cases"],
+                "constraints": ex["constraints"],
+                "static_hints": ex["static_hints"],
+            }
+            if "pass_explanation" in field_names:
+                defaults["pass_explanation"] = ex.get("pass_explanation", "")
             Exercise.objects.update_or_create(
                 level=level,
                 number=ex["number"],
-                defaults={
-                    "title": ex["title"],
-                    "instructions_markdown": ex["instructions_markdown"].strip(),
-                    "template_code": ex["template_code"],
-                    "solution_lines": ex["solution_lines"],
-                    "stdin_cases": ex["stdin_cases"],
-                    "constraints": ex["constraints"],
-                    "static_hints": ex["static_hints"],
-                },
+                defaults=defaults,
             )

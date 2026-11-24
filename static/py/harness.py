@@ -22,6 +22,11 @@ class _OutputLimit(Exception):
     pass
 
 
+class _NeedInput(Exception):
+    def __init__(self, prompt=""):
+        self.prompt = prompt
+
+
 class _LimitedWriter(io.StringIO):
     def write(self, s):
         if self.tell() + len(s) > MAX_OUTPUT_CHARS:
@@ -30,26 +35,36 @@ class _LimitedWriter(io.StringIO):
         return super().write(s)
 
 
-def run_code(code, stdin_text="", echo=True):
+def run_code(code, stdin_text="", echo=True, interactive=False):
     """Run ``code`` feeding ``stdin_text`` (one value per line) to ``input()``.
 
-    echo=True  -> behave like a terminal: show input() prompts and typed values.
-    echo=False -> only output produced by print() is captured (used for grading,
-                  so the prompt text inside input() is never graded).
+    echo=True        -> behave like a terminal: show input() prompts and typed values.
+    echo=False       -> only output produced by print() is captured (used for grading,
+                        so the prompt text inside input() is never graded).
+    interactive=True -> when input() needs another line that hasn't been provided yet,
+                        pause cleanly and return ``need_input=True`` + ``prompt`` so
+                        the browser terminal can ask the user to type a value.
 
-    Returns a dict: {"output": str, "error": str | None, "error_line": int | None}
+    Returns a dict:
+      {"output": str, "error": str | None, "error_line": int | None,
+       "need_input": bool, "prompt": str}
     """
     out = _LimitedWriter()
-    lines = stdin_text.splitlines()
+    lines = stdin_text.split("\n") if stdin_text != "" else []
     pos = [0]
 
     def _input(prompt=""):
-        if echo:
-            out.write(str(prompt))
+        prompt_str = str(prompt)
         if pos[0] >= len(lines):
+            if interactive:
+                raise _NeedInput(prompt_str)
+            if echo:
+                out.write(prompt_str)
             raise EOFError(
-                "The program asked for input, but there are no more values in the Input box."
+                "The program asked for input, but there are no more values available."
             )
+        if echo:
+            out.write(prompt_str)
         value = lines[pos[0]]
         pos[0] += 1
         if echo:
@@ -59,9 +74,12 @@ def run_code(code, stdin_text="", echo=True):
     old_out, old_err, real_input = sys.stdout, sys.stderr, builtins.input
     sys.stdout = sys.stderr = out
     builtins.input = _input
-    error, error_line = None, None
+    error, error_line, need_input, prompt_text = None, None, False, ""
     try:
         exec(compile(code, FILENAME, "exec"), {"__name__": "__main__", "__builtins__": builtins})
+    except _NeedInput as e:
+        need_input = True
+        prompt_text = e.prompt
     except _OutputLimit:
         error = "Output limit reached (your program printed too much - is there an endless loop?)."
     except SyntaxError as e:  # includes IndentationError
@@ -73,7 +91,13 @@ def run_code(code, stdin_text="", echo=True):
         error = f"{type(e).__name__}: {e}"
     finally:
         sys.stdout, sys.stderr, builtins.input = old_out, old_err, real_input
-    return {"output": out.getvalue(), "error": error, "error_line": error_line}
+    return {
+        "output": out.getvalue(),
+        "error": error,
+        "error_line": error_line,
+        "need_input": need_input,
+        "prompt": prompt_text,
+    }
 
 
 def _main():

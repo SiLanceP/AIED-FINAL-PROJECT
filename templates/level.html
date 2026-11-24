@@ -56,8 +56,8 @@
     </div>
 
     <div class="console">
-      <div class="console-head">Output</div>
-      <pre id="output" class="console-body">Press ▶ Run to try your code.</pre>
+      <div class="console-head">{% if interactive_terminal %}Interactive Terminal (Output){% else %}Output{% endif %}</div>
+      <div id="output" class="console-body">Press ▶ Run to try your code.</div>
     </div>
 
     <div id="ex-done" class="level-done" hidden>
@@ -85,10 +85,11 @@
     number: {{ level.number }},
     levelNumbers: [{% for n in level_numbers %}{{ n }}{% if not forloop.last %},{% endif %}{% endfor %}],
     maxHints: 3,
+    interactiveTerminal: {{ interactive_terminal|yesno:"true,false" }},
     exercises: JSON.parse(document.getElementById("exercises-data").textContent),
-    workerUrl: "{% static 'js/py-worker.js' %}",
-    harnessUrl: "{% static 'py/harness.py' %}",
+    workerUrl: "{% static 'js/py-worker.js' %}?v=6",
+    harnessUrl: "{% static 'py/harness.py' %}?v=6",
   };
 </script>
-<script src="{% static 'js/level.js' %}?v=3"></script>
+<script src="{% static 'js/level.js' %}?v=9"></script>
 {% endblock %}

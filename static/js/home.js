@@ -14,12 +14,14 @@
 
     const status = Progress.displayStatus(n, numbers);
     const lv = Progress.level(n);
+    const lvHints = Progress.levelHints(n, exCount);
+    const maxLvHints = exCount * 3;
     card.dataset.status = status;
     card.querySelector(".badge").textContent = STATUS_LABELS[status];
     card.querySelector(".card-stats").textContent =
       status === "locked" || status === "available"
         ? `0 / ${exCount} pts`
-        : `${pts} / ${exCount} pts · Hints: ${lv.hints}/3 · Incorrect: ${lv.wrong}`;
+        : `${pts} / ${exCount} pts · Hints: ${lvHints}/${maxLvHints} · Incorrect: ${lv.wrong}`;
     const btn = card.querySelector(".card-btn");
     if (status === "locked") {
       btn.textContent = "🔒 Locked";

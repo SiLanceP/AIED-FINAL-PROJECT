@@ -16,6 +16,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body {
   margin: 0;
   background: radial-gradient(1200px 600px at 20% -10%, #1d2752 0%, var(--bg) 60%);
@@ -183,8 +184,19 @@ code, pre, .editor, textarea, input[type="text"] { font-family: var(--mono); }
 
 .console { background: #090d1a; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
 .console-head { padding: .35rem .75rem; font-size: .78rem; color: var(--muted); background: #11182c; border-bottom: 1px solid var(--border); }
-.console-body { margin: 0; padding: .7rem .85rem; min-height: 3.4rem; max-height: 220px; overflow: auto; white-space: pre-wrap; color: #dbeafe; }
+.console-body {
+  margin: 0; padding: .7rem .85rem; min-height: 3.4rem; max-height: 220px;
+  overflow: auto; white-space: pre-wrap; color: #dbeafe; font-family: var(--mono); font-size: .9rem;
+}
 .console-body.has-error { color: #fecaca; }
+.term-input-line { display: flex; align-items: center; gap: .35rem; margin-top: .15rem; }
+.term-prompt { color: #38bdf8; white-space: pre; flex-shrink: 0; }
+.term-input {
+  flex: 1; background: rgba(56, 189, 248, .08); color: #86efac;
+  border: none; border-bottom: 1px solid var(--cyan); border-radius: 4px 4px 0 0;
+  padding: .15rem .4rem; font-family: var(--mono); font-size: .9rem; outline: none;
+}
+.term-input:focus { background: rgba(56, 189, 248, .15); }
 
 .level-done {
   margin-top: .85rem; padding: .75rem 1rem; border-radius: 10px;

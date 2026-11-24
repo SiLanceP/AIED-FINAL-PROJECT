@@ -64,17 +64,44 @@ def check(request, number):
     wrong, hints = _int(data.get("wrong")), min(_int(data.get("hints")), MAX_HINTS)
 
     result = evaluate(exercise, data.get("answers"))
+    extra = {}
     if result["correct"]:
         action = "passed"
+        extra["explanation"] = exercise.pass_explanation or "Great job! Your code works for every test input."
     elif not result["counted"]:
         action = "retry"
     elif hints >= MAX_HINTS:
-        action = "reveal"  # wrong again after using every hint -> solution review
+        action = "reveal"  # wrong again after exhausting all hints -> automatic solution review
     elif wrong + 1 >= 2:
         action = "suggest_hint"  # minimal feedback for the first mistakes, then offer hints
     else:
         action = "retry"
-    return JsonResponse({**_public(result), "action": action})
+    return JsonResponse({**_public(result), **extra, "action": action})
+
+
+@require_POST
+def explain_pass(request, number):
+    """Generate a personalized post-pass explanation (falls back to exercise.pass_explanation)."""
+    data = _body(request)
+    exercise = _exercise(number, data)
+    answers = data.get("answers") or []
+    result = evaluate(exercise, answers)
+    if not result["correct"]:
+        return JsonResponse({"error": "Exercise is not passed yet."}, status=400)
+
+    source, ai_error = "ai", None
+    try:
+        text, _cfg = chat(
+            data.get("ai"),
+            prompts.SYSTEM_PROMPT,
+            prompts.pass_prompt(exercise, answers, result),
+            max_tokens=250,
+        )
+    except AIUnavailable as e:
+        text = exercise.pass_explanation or "Great job! Your code works for every test input."
+        source, ai_error = "builtin", str(e)
+
+    return JsonResponse({"explanation": text, "source": source, "ai_error": ai_error})
 
 
 @require_POST
@@ -83,7 +110,7 @@ def hint(request, number):
     exercise = _exercise(number, data)
     used = _int(data.get("hints"))
     if used >= MAX_HINTS:
-        return JsonResponse({"error": "You have used all hints for this level."}, status=400)
+        return JsonResponse({"error": "You have used all hints for this exercise."}, status=400)
 
     answers = data.get("answers") or []
     result = evaluate(exercise, answers)
@@ -132,7 +159,7 @@ def reveal(request, number):
 
 
 def _builtin_summary(info, titles):
-    weak = [r for r in info["levels"] if r["status"] == "failed_revealed" or r["hints"] >= 2 or r["wrong"] >= 3]
+    weak = [r for r in info["levels"] if r["status"] == "failed_revealed" or r["hints"] >= 6 or r["wrong"] >= 4]
     if not weak:
         return ("Excellent work! You handled every topic confidently. "
                 "Next, try learning about conditionals (if/else) and loops in Python.")

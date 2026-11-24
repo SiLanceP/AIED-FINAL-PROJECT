@@ -41,6 +41,11 @@ class Exercise(models.Model):
         help_text='e.g. {"must_call": ["print"], "must_use": ["for"], "must_assign": ["age"]}',
     )
     static_hints = models.JSONField(help_text="3 escalating hints used when the AI is unavailable.")
+    pass_explanation = models.TextField(
+        blank=True,
+        default="",
+        help_text="Built-in explanation shown after the student passes this exercise.",
+    )
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

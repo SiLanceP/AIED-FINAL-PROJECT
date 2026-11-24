@@ -8,7 +8,7 @@
     <div id="grade" class="grade">–</div>
     <div>
       <p id="grade-reason" class="grade-reason">Loading…</p>
-      <p class="muted">Score: <b id="total-points">0 / 12</b> pts · Total hints: <b id="total-hints">0</b> · Incorrect attempts: <b id="total-wrong">0</b></p>
+      <p class="muted">Score: <b id="total-points">0 / 12</b> pts · Total hints: <b id="total-hints">0 / 36</b> · Incorrect attempts: <b id="total-wrong">0</b></p>
     </div>
   </div>
 
@@ -31,13 +31,13 @@
 <section class="grading-info">
   <h3>How you are graded</h3>
   <table class="table">
-    <thead><tr><th>Grade</th><th>Condition (across all 3 levels · 12 points total)</th></tr></thead>
+    <thead><tr><th>Grade</th><th>Condition (3 levels · 12 exercises · 3 hints per exercise = 36 hints max)</th></tr></thead>
     <tbody>
-      <tr><td><b>A</b></td><td>All 12 exercises passed (12/12 pts), no hints and no incorrect attempts</td></tr>
-      <tr><td><b>B+</b></td><td>1–5 hints (or no hints but some incorrect attempts)</td></tr>
-      <tr><td><b>B</b></td><td>6–9 hints</td></tr>
-      <tr><td><b>C</b></td><td>10–12 hints</td></tr>
-      <tr><td><b>D</b></td><td>13+ hints, or a solution had to be shown</td></tr>
+      <tr><td><b>A</b></td><td>All 12 exercises passed (12/12 pts), 0 hints and 0 incorrect attempts</td></tr>
+      <tr><td><b>B+</b></td><td>1–12 hints (or 0 hints but some incorrect attempts)</td></tr>
+      <tr><td><b>B</b></td><td>13–21 hints</td></tr>
+      <tr><td><b>C</b></td><td>22–29 hints</td></tr>
+      <tr><td><b>D</b></td><td>30–36 hints, or any exercise ended with a solution reveal</td></tr>
     </tbody>
   </table>
 </section>
@@ -47,5 +47,5 @@
   window.LEVEL_NUMBERS = [{% for l in levels %}{{ l.number }}{% if not forloop.last %},{% endif %}{% endfor %}];
   window.LEVEL_TITLES = { {% for l in levels %}{{ l.number }}: "{{ l.title|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %} };
 </script>
-<script src="{% static 'js/report.js' %}?v=3"></script>
+<script src="{% static 'js/report.js' %}?v=9"></script>
 {% endblock %}

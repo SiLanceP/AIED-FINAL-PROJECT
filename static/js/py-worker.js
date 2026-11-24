@@ -19,15 +19,15 @@ const ready = (async () => {
 self.onmessage = async (event) => {
   const pyodide = await ready;
   if (!pyodide) return;
-  const { id, code, stdin } = event.data;
+  const { id, code, stdin, interactive } = event.data;
   const runCode = pyodide.globals.get("run_code");
   try {
-    const res = runCode(code, stdin || "", true);
+    const res = runCode(code, stdin || "", true, Boolean(interactive));
     const obj = res.toJs({ dict_converter: Object.fromEntries });
     res.destroy();
     self.postMessage({ type: "result", id, ...obj });
   } catch (err) {
-    self.postMessage({ type: "result", id, output: "", error: String(err), error_line: null });
+    self.postMessage({ type: "result", id, output: "", error: String(err), error_line: null, need_input: false, prompt: "" });
   } finally {
     runCode.destroy();
   }

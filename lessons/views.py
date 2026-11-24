@@ -34,6 +34,7 @@ def level_detail(request, number):
             "level": level,
             "exercises": exercises,
             "exercises_payload": exercises_payload,
+            "interactive_terminal": level.number == 3,
             "lesson_html": _md(level.lesson_markdown),
             "prev_number": number - 1 if number - 1 in numbers else None,
             "next_number": number + 1 if number + 1 in numbers else None,

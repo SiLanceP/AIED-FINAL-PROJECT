@@ -65,15 +65,41 @@ def safety_problem(tree):
     return None
 
 
+def _type_matches(value, expected_type):
+    if expected_type == "bool":
+        return isinstance(value, bool)
+    if expected_type == "int":
+        return isinstance(value, int) and not isinstance(value, bool)
+    if expected_type == "str":
+        return isinstance(value, str)
+    return True
+
+
+def _type_label(t):
+    return {
+        "int": "a whole number (no quotes, like `2026`)",
+        "str": 'text in quotes (like `"Hello"`)',
+        "bool": "a boolean (`True` or `False`, no quotes)",
+    }.get(t, t)
+
+
 def constraint_problems(tree, constraints, student_lines):
     """Check constraints using only AST nodes that start on the student's lines."""
     nodes = [n for n in ast.walk(tree) if getattr(n, "lineno", None) in student_lines]
     calls = {n.func.id for n in nodes if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
     assigned = set()
+    assigned_values = {}
     for n in nodes:
-        targets = n.targets if isinstance(n, ast.Assign) else [getattr(n, "target", None)]
-        if isinstance(n, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
-            assigned |= {t.id for t in targets if isinstance(t, ast.Name)}
+        if isinstance(n, ast.Assign):
+            for t in n.targets:
+                if isinstance(t, ast.Name):
+                    assigned.add(t.id)
+                    assigned_values[t.id] = n.value
+        elif isinstance(n, (ast.AnnAssign, ast.AugAssign)):
+            t = getattr(n, "target", None)
+            if isinstance(t, ast.Name):
+                assigned.add(t.id)
+                assigned_values[t.id] = n.value
 
     custom = constraints.get("messages", {})
     problems = []
@@ -86,6 +112,64 @@ def constraint_problems(tree, constraints, student_lines):
     for name in constraints.get("must_assign", []):
         if name not in assigned:
             problems.append(custom.get(f"must_assign:{name}", f"Your code should create a variable named `{name}`."))
+
+    # Check that assigned literals have the required Python type (e.g. int 17 vs str "17", bool True vs str "True")
+    for var_name, expected_type in constraints.get("assign_types", {}).items():
+        val_node = assigned_values.get(var_name)
+        if isinstance(val_node, ast.Constant) and not _type_matches(val_node.value, expected_type):
+            problems.append(
+                custom.get(
+                    f"assign_type:{var_name}",
+                    f"`{var_name}` should be {_type_label(expected_type)}, not {_type_label(type(val_node.value).__name__)}.",
+                )
+            )
+
+    # Check that specific variables/names are actually referenced (not hardcoded!)
+    loaded_names = {
+        n.id for n in nodes if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load)
+    }
+    for name in constraints.get("must_ref", []):
+        if name not in loaded_names:
+            problems.append(
+                custom.get(
+                    f"must_ref:{name}",
+                    f"Use the variable `{name}` directly (without quotes) instead of typing its value manually.",
+                )
+            )
+
+    # Check required binary operator (e.g. '+' for total = burger + drink)
+    if constraints.get("must_add"):
+        has_add = any(isinstance(n, ast.BinOp) and isinstance(n.op, ast.Add) for n in nodes)
+        if not has_add:
+            problems.append(custom.get("must_add", "Use the `+` operator to add the variables together."))
+
+    # Check exact argument types passed to print() on every student print() call
+    print_arg_types = constraints.get("print_arg_types")
+    if print_arg_types:
+        print_calls = [
+            n for n in nodes
+            if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "print"
+        ]
+        if print_calls:
+            all_match = True
+            for call in print_calls:
+                if len(call.args) != len(print_arg_types):
+                    all_match = False
+                    break
+                for arg, exp_t in zip(call.args, print_arg_types):
+                    if not (isinstance(arg, ast.Constant) and _type_matches(arg.value, exp_t)):
+                        all_match = False
+                        break
+                if not all_match:
+                    break
+            if not all_match:
+                if len(print_arg_types) == 1:
+                    default_msg = f"Inside `print()`, pass {_type_label(print_arg_types[0])}."
+                else:
+                    parts = " and ".join(_type_label(t) for t in print_arg_types)
+                    default_msg = f"Inside `print()`, pass {len(print_arg_types)} values separated by a comma: {parts}."
+                problems.append(custom.get("print_arg_types", default_msg))
+
     return problems
 
 

@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.10.0/build/styles/atom-one-dark.min.css">
-  <link rel="stylesheet" href="{% static 'css/style.css' %}?v=3">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}?v=5">
 </head>
 <body>
   <header class="topbar">
@@ -34,7 +34,7 @@
     window.UNLOCK_ALL = {{ unlock_all|yesno:"true,false" }};
   </script>
   <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.10.0/build/highlight.min.js"></script>
-  <script src="{% static 'js/common.js' %}?v=3"></script>
+  <script src="{% static 'js/common.js' %}?v=8"></script>
   <script>document.addEventListener("DOMContentLoaded", () => window.hljs && hljs.highlightAll());</script>
   {% block scripts %}{% endblock %}
 </body>
