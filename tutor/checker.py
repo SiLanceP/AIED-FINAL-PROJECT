@@ -12,6 +12,7 @@ valid answers are accepted - e.g. ``range(1, 11)`` and ``range(1, 10 + 1)``.
 """
 
 import ast
+import re
 
 from .runner import CodeTimeout, run_cases
 
@@ -36,8 +37,16 @@ def _line_label(exercise, lineno):
     return f"Line {lineno}" if lineno else "Your code"
 
 
+_PUNCT_RE = re.compile(r"[^\w\s]+")
+_SPACES_RE = re.compile(r"\s+")
+
+
 def _normalize(text):
-    lines = [ln.rstrip() for ln in (text or "").replace("\r\n", "\n").split("\n")]
+    """Compare outputs leniently: ignore capitalization, punctuation, and extra spaces."""
+    lines = []
+    for ln in (text or "").replace("\r\n", "\n").split("\n"):
+        cleaned = _SPACES_RE.sub(" ", _PUNCT_RE.sub(" ", ln)).strip().lower()
+        lines.append(cleaned)
     while lines and not lines[-1]:
         lines.pop()
     return "\n".join(lines)

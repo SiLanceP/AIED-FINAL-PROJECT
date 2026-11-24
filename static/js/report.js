@@ -1,4 +1,4 @@
-// Report page: grade is computed by the server from the browser's progress.
+// Report page: grade and 12-point score computed by the server from browser progress.
 (function () {
   "use strict";
   const { Progress, AISettings, api, escapeHtml, formatAiText, STATUS_LABELS } = window.Tutor;
@@ -11,6 +11,7 @@
     $("grade").textContent = res.grade || "–";
     $("grade").dataset.grade = res.grade || "none";
     $("grade-reason").textContent = res.reason;
+    $("total-points").textContent = `${res.total_points ?? 0} / ${res.max_points ?? 12}`;
     $("total-hints").textContent = res.total_hints;
     $("total-wrong").textContent = res.total_wrong;
 
@@ -18,6 +19,7 @@
       const status = r.status === "locked" && Progress.isUnlocked(r.level, window.LEVEL_NUMBERS) ? "available" : r.status;
       return `<tr><td>Level ${r.level}</td><td>${escapeHtml(window.LEVEL_TITLES[r.level] || "")}</td>
         <td><span class="badge" data-status="${status}">${STATUS_LABELS[status] || status}</span></td>
+        <td><b>${r.points ?? 0} / ${r.max_points ?? 4}</b></td>
         <td>${r.hints} / 3</td><td>${r.wrong}</td></tr>`;
     }).join("");
 

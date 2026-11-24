@@ -53,6 +53,10 @@
     $("key-link").href = p.key_url;
     $("key-link").textContent = p.kind === "local" ? `Download ${p.label.split(" (")[0]}` : "Get a free API key";
     $("server-key-note").hidden = !p.server_has_key;
+    if (p.keyless) {
+      $("api-key-wrap").hidden = true;
+      $("key-link-wrap").hidden = true;
+    }
     autoFetchLocalModels();
   }
 

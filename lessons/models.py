@@ -18,14 +18,16 @@ class Level(models.Model):
 
 
 class Exercise(models.Model):
-    """Exactly ONE exercise per level: a code block with missing lines.
+    """One exercise inside a level (each level has 4 exercises, 1 point each = 12 points total).
 
     In ``template_code`` every line whose content is ``____`` is a missing line the
     student must type. Indentation in front of ``____`` is kept, so the student
     only types the code itself.
     """
 
-    level = models.OneToOneField(Level, on_delete=models.CASCADE, related_name="exercise")
+    level = models.ForeignKey(Level, on_delete=models.CASCADE, related_name="exercises")
+    number = models.PositiveIntegerField(default=1, help_text="Exercise number within the level (1..4).")
+    title = models.CharField(max_length=100, default="Exercise")
     instructions_markdown = models.TextField()
     template_code = models.TextField()
     solution_lines = models.JSONField(help_text="One correct answer per missing line (in order).")
@@ -41,8 +43,14 @@ class Exercise(models.Model):
     static_hints = models.JSONField(help_text="3 escalating hints used when the AI is unavailable.")
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        ordering = ["level__number", "number"]
+        constraints = [
+            models.UniqueConstraint(fields=["level", "number"], name="unique_level_exercise_number"),
+        ]
+
     def __str__(self):
-        return f"Exercise for {self.level}"
+        return f"Level {self.level.number} · Exercise {self.number}: {self.title}"
 
     # ---- helpers --------------------------------------------------------
     @property

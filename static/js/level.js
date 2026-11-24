@@ -1,15 +1,21 @@
-// Level page: missing-line editor, in-browser runner (Pyodide), and the tutor flow.
+// Level page: 4 exercises per level, missing-line editor, Pyodide runner, and tutor flow.
 (function () {
   "use strict";
   const { Progress, AISettings, api, escapeHtml, formatAiText } = window.Tutor;
   const cfg = window.LEVEL_CONFIG; // set in level.html
   const N = cfg.number;
+  const EXERCISES = cfg.exercises; // [{number, title, instructions_html, rows, sample_stdin}, ...]
+  const EX_COUNT = EXERCISES.length;
   const RUN_TIMEOUT_MS = 5000;
+  const FINISHED = ["passed", "failed_revealed"];
 
   const $ = (id) => document.getElementById(id);
-  const inputs = Array.from(document.querySelectorAll(".blank-input"));
   const runBtn = $("run-btn"), submitBtn = $("submit-btn"), hintBtn = $("hint-btn");
-  const stdinBox = $("stdin"), outputBox = $("output"), feed = $("tutor-feed");
+  const outputBox = $("output"), feed = $("tutor-feed");
+  const editorBody = $("editor-body"), instructionsEl = $("instructions");
+  const exDone = $("ex-done"), exDoneText = $("ex-done-text");
+  const nextExBtn = $("next-ex-btn"), nextLevelBtn = $("next-level-btn");
+  const tabBtns = Array.from(document.querySelectorAll(".ex-tab"));
 
   // ------------------------------------------------------------ lock check
   if (!Progress.isUnlocked(N, cfg.levelNumbers)) {
@@ -17,57 +23,169 @@
     return;
   }
 
-  // ------------------------------------------------------------ restore state
-  let state = Progress.level(N);
-  if (!state.status) state = Progress.update(N, { status: "in_progress" });
-  inputs.forEach((el, i) => { el.value = state.answers[i] || ""; });
-  state.hintLog.forEach((h) => addMessage("hint", `Hint ${h.n}`, h.text, h.source));
-  if (state.revealed) showReveal(state.revealed, false);
+  let levelState = Progress.level(N);
+  if (!levelState.status) levelState = Progress.update(N, { status: "in_progress" });
 
-  function save(patch) {
-    state = Progress.update(N, patch);
-    renderStats();
+  let currentExNum = levelState.currentEx || 1;
+  // Default to the first unfinished exercise if currentEx is invalid
+  if (!EXERCISES.some((e) => e.number === currentExNum)) currentExNum = 1;
+  let inputs = [];
+
+  function getExDef(exNum) {
+    return EXERCISES.find((e) => e.number === exNum) || EXERCISES[0];
+  }
+
+  function isExUnlocked(exNum) {
+    if (Progress.isUnlockAll() || exNum <= 1) return true;
+    const prev = Progress.exercise(N, exNum - 1);
+    return FINISHED.includes(prev.status);
+  }
+
+  function recomputeLevelStatus() {
+    levelState = Progress.level(N);
+    const statuses = EXERCISES.map((e) => Progress.exercise(N, e.number).status);
+    if (statuses.every((s) => FINISHED.includes(s))) {
+      const anyRevealed = statuses.some((s) => s === "failed_revealed");
+      const finalStatus = anyRevealed ? "failed_revealed" : "passed";
+      if (levelState.status !== finalStatus) {
+        levelState = Progress.update(N, { status: finalStatus });
+      }
+    } else if (FINISHED.includes(levelState.status)) {
+      levelState = Progress.update(N, { status: "in_progress" });
+    }
+  }
+
+  function renderTabs() {
+    tabBtns.forEach((btn) => {
+      const num = Number(btn.dataset.ex);
+      const exState = Progress.exercise(N, num);
+      const unlocked = isExUnlocked(num);
+      btn.classList.toggle("active", num === currentExNum);
+      btn.disabled = !unlocked;
+      btn.dataset.status = exState.status || (unlocked ? "available" : "locked");
+      const stateEl = btn.querySelector(".ex-tab-state");
+      if (exState.status === "passed") stateEl.textContent = "✓ 1/1 pt";
+      else if (exState.status === "failed_revealed") stateEl.textContent = "0/1 pt";
+      else if (!unlocked) stateEl.textContent = "🔒";
+      else stateEl.textContent = "1 pt";
+    });
   }
 
   function renderStats() {
-    const left = cfg.maxHints - state.hints;
-    $("stat-wrong").textContent = state.wrong;
-    $("stat-hints").textContent = `${state.hints} / ${cfg.maxHints}`;
+    levelState = Progress.level(N);
+    const exState = Progress.exercise(N, currentExNum);
+    const left = Math.max(0, cfg.maxHints - levelState.hints);
+    const pts = Progress.levelPoints(N, EX_COUNT);
+
+    $("stat-points").textContent = `${pts} / ${EX_COUNT}`;
+    $("stat-wrong").textContent = levelState.wrong;
+    $("stat-hints").textContent = `${levelState.hints} / ${cfg.maxHints}`;
     hintBtn.textContent = `💡 Hint (${left} left)`;
-    const finished = state.status === "passed" || state.status === "failed_revealed";
-    hintBtn.disabled = finished || left <= 0;
-    submitBtn.disabled = finished;
-    inputs.forEach((el) => { el.readOnly = finished; });
-    $("level-done").hidden = !finished;
-    $("level-done").dataset.status = state.status;
-    $("level-done-text").textContent = state.status === "passed"
-      ? "🎉 Level passed!" : "Level finished (solution was shown - marked incorrect).";
+
+    const exFinished = FINISHED.includes(exState.status);
+    hintBtn.disabled = exFinished || left <= 0;
+    submitBtn.disabled = exFinished;
+    inputs.forEach((el) => { el.readOnly = exFinished; });
+
+    exDone.hidden = !exFinished;
+    exDone.dataset.status = exState.status || "";
+    const allFinished = EXERCISES.every((e) => FINISHED.includes(Progress.exercise(N, e.number).status));
+    if (exFinished) {
+      if (exState.status === "passed") {
+        exDoneText.textContent = allFinished
+          ? `🎉 Exercise ${currentExNum} passed (+1 pt)! You finished Level ${N}!`
+          : `🎉 Exercise ${currentExNum} passed (+1 pt)!`;
+      } else {
+        exDoneText.textContent = `Exercise ${currentExNum} finished (solution shown — 0 pts).`;
+      }
+      const hasNextEx = currentExNum < EX_COUNT;
+      nextExBtn.hidden = !hasNextEx;
+      nextLevelBtn.hidden = hasNextEx || !allFinished;
+    } else {
+      nextExBtn.hidden = true;
+      nextLevelBtn.hidden = true;
+    }
+    renderTabs();
   }
-  renderStats();
+
+  function buildEditor(exDef, exState) {
+    editorBody.innerHTML = exDef.rows.map((r) => {
+      if (r.blank) {
+        return `<div class="code-row blank" data-line="${r.n}">
+          <span class="ln">${r.n}</span>
+          <span class="indent">${escapeHtml(r.indent)}</span>
+          <input class="blank-input" type="text" data-index="${r.blank_index}"
+                 placeholder="Type missing line ${r.blank_index + 1} here…"
+                 spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off">
+        </div>`;
+      }
+      return `<div class="code-row" data-line="${r.n}">
+        <span class="ln">${r.n}</span>
+        <code class="language-python static-line">${r.text ? escapeHtml(r.text) : " "}</code>
+      </div>`;
+    }).join("");
+
+    editorBody.querySelectorAll(".static-line").forEach((el) => window.hljs && hljs.highlightElement(el));
+    inputs = Array.from(editorBody.querySelectorAll(".blank-input"));
+    inputs.forEach((el, i) => {
+      el.value = (exState.answers && exState.answers[i]) || "";
+      el.addEventListener("input", () => {
+        Progress.updateExercise(N, currentExNum, { answers: answers() });
+        markErrorLine(null);
+      });
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); runCode(); }
+        else if (e.key === "Enter") { e.preventDefault(); (inputs[i + 1] || submitBtn).focus(); }
+      });
+    });
+  }
+
+  function selectExercise(exNum) {
+    if (!isExUnlocked(exNum)) return;
+    currentExNum = exNum;
+    Progress.update(N, { currentEx: exNum });
+    const exDef = getExDef(exNum);
+    const exState = Progress.exercise(N, exNum);
+
+    $("ex-title").textContent = `✏️ Exercise ${exDef.number} of ${EX_COUNT}: ${exDef.title}`;
+    instructionsEl.innerHTML = exDef.instructions_html;
+    outputBox.textContent = "Press ▶ Run to try your code.";
+    outputBox.classList.remove("has-error");
+
+    buildEditor(exDef, exState);
+
+    feed.innerHTML = `<div class="msg msg-info"><div class="msg-body">Fill in the missing lines for <b>Exercise ${exDef.number}</b>, press <b>▶ Run</b> to test, then <b>✓ Submit</b>.</div></div>`;
+    (exState.hintLog || []).forEach((h) => addMessage("hint", `Hint ${h.n}`, h.text, h.source));
+    if (exState.revealed) showReveal(exState.revealed, false);
+
+    recomputeLevelStatus();
+    renderStats();
+  }
+
+  tabBtns.forEach((btn) => {
+    btn.addEventListener("click", () => selectExercise(Number(btn.dataset.ex)));
+  });
+
+  nextExBtn.addEventListener("click", () => {
+    if (currentExNum < EX_COUNT) selectExercise(currentExNum + 1);
+  });
 
   // ------------------------------------------------------------ editor helpers
   const answers = () => inputs.map((el) => el.value);
 
   function assemble() {
+    const exDef = getExDef(currentExNum);
     let k = 0;
-    return cfg.rows.map((r) => (r.blank ? r.indent + (inputs[k++].value || "").trim() : r.text)).join("\n") + "\n";
+    return exDef.rows.map((r) => (r.blank ? r.indent + (inputs[k++].value || "").trim() : r.text)).join("\n") + "\n";
   }
 
   function markErrorLine(line) {
-    document.querySelectorAll(".code-row.error").forEach((el) => el.classList.remove("error"));
+    editorBody.querySelectorAll(".code-row.error").forEach((el) => el.classList.remove("error"));
     if (line) {
-      const row = document.querySelector(`.code-row[data-line="${line}"]`);
+      const row = editorBody.querySelector(`.code-row[data-line="${line}"]`);
       if (row) row.classList.add("error");
     }
   }
-
-  inputs.forEach((el, i) => {
-    el.addEventListener("input", () => { save({ answers: answers() }); markErrorLine(null); });
-    el.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); runCode(); }
-      else if (e.key === "Enter") { e.preventDefault(); (inputs[i + 1] || submitBtn).focus(); }
-    });
-  });
 
   // ------------------------------------------------------------ tutor feed
   function addMessage(type, title, html, source) {
@@ -117,7 +235,7 @@
       const id = ++runId;
       const timer = setTimeout(() => {
         pending = null;
-        worker.terminate(); // stop an infinite loop
+        worker.terminate();
         startWorker();
         resolve({ output: "", error: "Your program took too long (more than 5 seconds). Is there a loop that never ends?" });
       }, RUN_TIMEOUT_MS);
@@ -131,7 +249,8 @@
     busy(runBtn, true, "Running…");
     outputBox.textContent = "";
     outputBox.classList.remove("has-error");
-    const res = await runInWorker(assemble(), stdinBox.value);
+    const sampleStdin = getExDef(currentExNum).sample_stdin || "";
+    const res = await runInWorker(assemble(), sampleStdin);
     let text = res.output || "";
     if (res.error) {
       const line = res.error_line ? `Line ${res.error_line}: ` : "";
@@ -148,14 +267,29 @@
   submitBtn.addEventListener("click", async () => {
     busy(submitBtn, true, "Checking…");
     try {
-      const res = await api(`/api/check/${N}/`, { answers: answers(), wrong: state.wrong, hints: state.hints });
+      levelState = Progress.level(N);
+      const exState = Progress.exercise(N, currentExNum);
+      const res = await api(`/api/check/${N}/`, {
+        exercise: currentExNum,
+        answers: answers(),
+        wrong: exState.wrong,
+        hints: levelState.hints,
+      });
       markErrorLine(res.details && res.details.error_line);
       if (res.correct) {
-        save({ status: "passed" });
-        addMessage("success", "Correct!", escapeHtml(res.message));
+        Progress.updateExercise(N, currentExNum, { status: "passed", answers: answers() });
+        recomputeLevelStatus();
+        addMessage("success", `Exercise ${currentExNum} Correct! (+1 pt)`, escapeHtml(res.message));
         return;
       }
-      if (res.counted) save({ wrong: state.wrong + 1 });
+      if (res.counted) {
+        Progress.updateExercise(
+          N,
+          currentExNum,
+          { wrong: exState.wrong + 1, answers: answers() },
+          { wrong: levelState.wrong + 1 }
+        );
+      }
 
       let html = escapeHtml(res.message);
       const d = res.details || {};
@@ -164,8 +298,9 @@
         html += `<div class="io-grid"><div><b>Your output</b><pre>${escapeHtml(d.output || "(nothing)")}</pre></div>`
           + `<div><b>Expected output</b><pre>${escapeHtml(d.expected)}</pre></div></div>`;
       }
-      if (res.action === "suggest_hint") {
-        html += `<div class="nudge">Stuck? Press <b>💡 Hint</b> for help (${cfg.maxHints - state.hints} left).</div>`;
+      levelState = Progress.level(N);
+      if (res.action === "suggest_hint" && levelState.hints < cfg.maxHints) {
+        html += `<div class="nudge">Stuck? Press <b>💡 Hint</b> for help (${cfg.maxHints - levelState.hints} left for this level).</div>`;
       }
       addMessage(res.counted ? "error" : "info", res.counted ? "Not quite" : "Almost ready", html);
 
@@ -179,15 +314,28 @@
 
   // ------------------------------------------------------------ Hint
   hintBtn.addEventListener("click", async () => {
-    if (state.hints >= cfg.maxHints) return;
+    levelState = Progress.level(N);
+    if (levelState.hints >= cfg.maxHints) return;
     busy(hintBtn, true, "💡 Thinking…");
     try {
-      const res = await api(`/api/hint/${N}/`, { answers: answers(), hints: state.hints, ai: AISettings.load() });
+      const exState = Progress.exercise(N, currentExNum);
+      const res = await api(`/api/hint/${N}/`, {
+        exercise: currentExNum,
+        answers: answers(),
+        hints: levelState.hints,
+        ai: AISettings.load(),
+      });
       if (!res.consumed) {
         addMessage("info", "Hint", escapeHtml(res.hint));
         return;
       }
-      save({ hints: state.hints + 1, hintLog: [...state.hintLog, { n: res.hint_number, text: res.hint, source: res.source }] });
+      const nextHintLog = [...(exState.hintLog || []), { n: res.hint_number, text: res.hint, source: res.source }];
+      Progress.updateExercise(
+        N,
+        currentExNum,
+        { hintLog: nextHintLog, answers: answers() },
+        { hints: levelState.hints + 1 }
+      );
       const msg = addMessage("hint", `Hint ${res.hint_number}`, res.hint, res.source);
       if (res.ai_error) {
         msg.insertAdjacentHTML("beforeend", `<div class="ai-note">AI unavailable: ${escapeHtml(res.ai_error)}</div>`);
@@ -203,10 +351,22 @@
   async function doReveal() {
     const loading = addMessage("info", "Solution review", "All hints were used. Preparing an explanation…");
     try {
-      const res = await api(`/api/reveal/${N}/`, { answers: answers(), hints: state.hints, ai: AISettings.load() });
+      levelState = Progress.level(N);
+      const res = await api(`/api/reveal/${N}/`, {
+        exercise: currentExNum,
+        answers: answers(),
+        hints: levelState.hints,
+        ai: AISettings.load(),
+      });
       loading.remove();
-      const revealed = { explanation: res.explanation, source: res.source, solution_lines: res.solution_lines, ai_error: res.ai_error };
-      save({ status: "failed_revealed", revealed });
+      const revealed = {
+        explanation: res.explanation,
+        source: res.source,
+        solution_lines: res.solution_lines,
+        ai_error: res.ai_error,
+      };
+      Progress.updateExercise(N, currentExNum, { status: "failed_revealed", revealed });
+      recomputeLevelStatus();
       showReveal(revealed, true);
     } catch (err) {
       loading.remove();
@@ -221,10 +381,17 @@
       el.classList.add("revealed");
     });
     const sol = revealed.solution_lines.map((s, i) => `<div><b>Missing line ${i + 1}:</b> <code>${escapeHtml(s)}</code></div>`).join("");
-    const msg = addMessage("explain", "Solution review (marked incorrect)", revealed.explanation, revealed.source);
+    const msg = addMessage("explain", "Solution review (marked incorrect — 0 pts)", revealed.explanation, revealed.source);
     msg.insertAdjacentHTML("beforeend", `<div class="solution">${sol}<p class="muted">The correct lines are now in the editor - press ▶ Run to see them work.</p></div>`);
     if (fresh && revealed.ai_error) {
       msg.insertAdjacentHTML("beforeend", `<div class="ai-note">AI unavailable: ${escapeHtml(revealed.ai_error)}</div>`);
     }
   }
+
+  // Initialize first unfinished or saved exercise
+  const firstUnfinished = EXERCISES.find((e) => !FINISHED.includes(Progress.exercise(N, e.number).status));
+  if (!isExUnlocked(currentExNum)) {
+    currentExNum = firstUnfinished ? firstUnfinished.number : 1;
+  }
+  selectExercise(currentExNum);
 })();

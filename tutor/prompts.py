@@ -41,6 +41,7 @@ def _context(exercise, answers, result):
     )
     solution = "\n".join(f"Missing line {i + 1}: {s}" for i, s in enumerate(exercise.solution_lines))
     return f"""LESSON: Level {exercise.level.number} - {exercise.level.title} ({exercise.level.topic})
+EXERCISE {exercise.number}: {exercise.title}
 
 TASK:
 {exercise.instructions_markdown}
@@ -83,12 +84,14 @@ def report_prompt(grade_info, level_titles):
     for row in grade_info["levels"]:
         lines.append(
             f"Level {row['level']} ({level_titles.get(row['level'], '')}): status={row['status']}, "
+            f"points={row.get('points', 0)}/{row.get('max_points', 4)}, "
             f"hints={row['hints']}, incorrect attempts={row['wrong']}"
         )
-    return f"""A student finished a 5-level beginner Python tutorial. Their results:
+    return f"""A student finished a 3-level beginner Python tutorial (12 points total, 4 exercises per level). Their results:
 {chr(10).join(lines)}
+Total Score: {grade_info.get('total_points', 0)} / {grade_info.get('max_points', 12)} points
 Grade: {grade_info['grade']} ({grade_info['reason']})
 
 In 3-4 short sentences: congratulate them, name the topic(s) they struggled with most
 (based on hints, incorrect attempts and revealed solutions), and give one concrete practice suggestion
-for each weak topic. If they made no mistakes, suggest what to learn next (e.g. lists, functions)."""
+for each weak topic. If they made no mistakes, suggest what to learn next (e.g. conditionals, loops)."""

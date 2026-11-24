@@ -120,7 +120,26 @@ code, pre, .editor, textarea, input[type="text"] { font-family: var(--mono); }
 .lesson-head h1 { margin: .15rem 0 .75rem; font-size: 1.5rem; }
 .lesson-nav { display: flex; justify-content: space-between; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border); }
 .exercise { display: flex; flex-direction: column; gap: 1.1rem; }
-.stats { display: flex; gap: 1rem; font-size: .88rem; color: var(--muted); }
+.stats { display: flex; gap: 1rem; font-size: .88rem; color: var(--muted); flex-wrap: wrap; }
+
+.ex-tabs {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem;
+  margin: .35rem 0 .85rem;
+}
+.ex-tab {
+  display: flex; align-items: center; justify-content: space-between; gap: .35rem;
+  padding: .48rem .7rem; border-radius: 9px; border: 1px solid var(--border);
+  background: var(--panel-2); color: var(--text); font-family: inherit;
+  font-size: .84rem; font-weight: 600; cursor: pointer; transition: .15s;
+}
+.ex-tab:hover:not(:disabled) { border-color: var(--cyan); }
+.ex-tab:disabled { opacity: .45; cursor: not-allowed; }
+.ex-tab.active { border-color: var(--primary); background: rgba(99, 102, 241, .18); box-shadow: 0 0 0 1px var(--primary); }
+.ex-tab[data-status="passed"] { border-color: rgba(34, 197, 94, .65); }
+.ex-tab[data-status="passed"] .ex-tab-state { color: #86efac; }
+.ex-tab[data-status="failed_revealed"] { border-color: rgba(245, 158, 11, .65); }
+.ex-tab[data-status="failed_revealed"] .ex-tab-state { color: #fde68a; }
+.ex-tab-state { font-size: .75rem; font-weight: 500; color: var(--muted); }
 
 .prose h2, .prose h3 { margin-top: 1.1rem; margin-bottom: .35rem; }
 .prose pre { background: #0d1224 !important; padding: .75rem .9rem; border-radius: 9px; border: 1px solid var(--border); overflow-x: auto; }

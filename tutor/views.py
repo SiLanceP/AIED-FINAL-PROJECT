@@ -24,15 +24,20 @@ def _body(request):
         return {}
 
 
-def _exercise(number):
-    return get_object_or_404(Exercise.objects.select_related("level"), level__number=number)
-
-
 def _int(v, default=0):
     try:
         return max(0, int(v))
     except (TypeError, ValueError):
         return default
+
+
+def _exercise(number, data):
+    ex_num = _int(data.get("exercise"), 1) or 1
+    return get_object_or_404(
+        Exercise.objects.select_related("level"),
+        level__number=number,
+        number=ex_num,
+    )
 
 
 def _public(result):
@@ -54,8 +59,8 @@ def _leaks_solution(text, exercise):
 @require_POST
 def check(request, number):
     """Submit answers. The browser sends its local counters; the server decides the next tutor step."""
-    exercise = _exercise(number)
     data = _body(request)
+    exercise = _exercise(number, data)
     wrong, hints = _int(data.get("wrong")), min(_int(data.get("hints")), MAX_HINTS)
 
     result = evaluate(exercise, data.get("answers"))
@@ -74,8 +79,8 @@ def check(request, number):
 
 @require_POST
 def hint(request, number):
-    exercise = _exercise(number)
     data = _body(request)
+    exercise = _exercise(number, data)
     used = _int(data.get("hints"))
     if used >= MAX_HINTS:
         return JsonResponse({"error": "You have used all hints for this level."}, status=400)
@@ -102,8 +107,8 @@ def hint(request, number):
 
 @require_POST
 def reveal(request, number):
-    exercise = _exercise(number)
     data = _body(request)
+    exercise = _exercise(number, data)
     if _int(data.get("hints")) < MAX_HINTS:
         return JsonResponse({"error": "The solution is only shown after all hints are used."}, status=400)
 
@@ -130,7 +135,7 @@ def _builtin_summary(info, titles):
     weak = [r for r in info["levels"] if r["status"] == "failed_revealed" or r["hints"] >= 2 or r["wrong"] >= 3]
     if not weak:
         return ("Excellent work! You handled every topic confidently. "
-                "Next, try learning about lists and functions in Python.")
+                "Next, try learning about conditionals (if/else) and loops in Python.")
     topics = ", ".join(f"Level {r['level']} ({titles.get(r['level'], '')})" for r in weak)
     return (f"Well done for finishing! You found these topics harder: {topics}. "
             "Re-read those lessons, then reset your progress and try those levels again without hints.")
@@ -141,7 +146,8 @@ def grade(request):
     data = _body(request)
     levels_map = data.get("levels") if isinstance(data.get("levels"), dict) else {}
     titles = dict(Level.objects.values_list("number", "title"))
-    info = compute_grade(levels_map, sorted(titles), MAX_HINTS)
+    ex_counts = {l.number: l.exercises.count() for l in Level.objects.prefetch_related("exercises")}
+    info = compute_grade(levels_map, sorted(titles), MAX_HINTS, ex_counts=ex_counts)
 
     info["summary"], info["summary_source"] = None, None
     if info["complete"] and data.get("summarize"):

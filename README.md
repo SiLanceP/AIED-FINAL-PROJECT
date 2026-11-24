@@ -2,18 +2,16 @@
 
 An interactive web-based Python tutor built with **Django** for **CSCI 111.13 Final Project**.
 
-Students learn fundamental Python programming across **5 levels**, complete **fill-in-the-blank (missing-line) exercises** with an **in-browser Python compiler (Pyodide)**, and receive **step-by-step guidance from an AI tutor** that works with either **Local LLMs (Ollama / LM Studio)** or **Free Cloud APIs (Google Gemini / Groq / OpenRouter)**.
+Students learn fundamental Python programming across **3 beginner-friendly levels** (**4 exercises per level = 12 points total**), complete **fill-in-the-blank (missing-line) exercises** with an **in-browser Python compiler (Pyodide)**, and receive **step-by-step guidance from an AI tutor** that works with either **Local LLMs (Ollama / LM Studio)** or **Free Cloud APIs (Google Gemini / Groq / OpenRouter)**.
 
 ---
 
 ## ✨ Features
 
-- **5 Structured Levels** (1 missing-line exercise per level):
-  1. **Level 1 (`print()`)** — Printing Output
-  2. **Level 2 (`Variables`)** — Variables and Data Types (`str`, `int`, `float`, `bool`)
-  3. **Level 3 (`input()`)** — Getting User Input & `int()` type conversion
-  4. **Level 4 (`Conditionals`)** — `if`, `elif`, and `else` statements
-  5. **Level 5 (`Loops`)** — `for` loops with `range()` and `while` loops
+- **3 Super-Beginner Levels** (4 missing-line exercises per level = **12 points total**):
+  1. **Level 1 (`print()`)** — Printing Output (4 exercises, 4 pts)
+  2. **Level 2 (`Variables`)** — Variables and Data Types (`str`, `int`, `bool`, and simple math; 4 exercises, 4 pts)
+  3. **Level 3 (`input()`)** — Getting User Input & `int()` type conversion (4 exercises, 4 pts)
 - **In-Browser Python Compiler (Pyodide):**
   - Runs real Python in the browser inside a Web Worker (with a 5-second timeout to stop infinite loops).
   - Supports `input()` via the **Input** box (one value per line).
@@ -73,11 +71,15 @@ Students learn fundamental Python programming across **5 levels**, complete **fi
 
 ---
 
-## 🤖 2. Setting Up the AI Tutor (Local vs. Online)
+## 🤖 2. Setting Up the AI Tutor (Automatic, Local, or Online)
 
-You can configure the AI either through the website's **AI Settings** page (`http://127.0.0.1:8000/settings/`) or by creating a `.env` file on the server.
+By default, the website uses **Automatic mode** — **no setup or API key required**. Whenever a student asks for a hint, it automatically tries:
+1. **Server `.env` cloud key** (Gemini / Groq / OpenRouter), if you configured one
+2. **Local Ollama** (if running on your computer — fast and unlimited)
+3. **Free keyless online AI (Pollinations)** — works automatically with internet, no key needed *(note: limited to 1 reply every 45 seconds per IP)*
+4. **Built-in hints** — always available offline as a final fallback
 
-> **Note:** Even if you don't set up any AI, the website still works 100% using its built-in hints!
+You can also switch providers manually anytime on **AI Settings** (`http://127.0.0.1:8000/settings/`).
 
 ---
 
@@ -85,7 +87,7 @@ You can configure the AI either through the website's **AI Settings** page (`htt
 
 Running a local model is completely free, private, and requires no API keys.
 
-#### Using Ollama (Default)
+#### Using Ollama
 1. Download and install **Ollama** from [https://ollama.com/download](https://ollama.com/download).
 2. Open a terminal and pull a coding model:
    - **For 8–16 GB RAM + 4 GB+ VRAM (Recommended):**
@@ -121,7 +123,7 @@ If your computer doesn't have enough RAM/VRAM for a local LLM, use any of these 
 
 | Provider | Default Model | Where to get a Free API Key |
 |---|---|---|
-| **Google Gemini** | `gemini-2.5-flash` | [https://aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
+| **Google Gemini** (default) | `gemini-2.5-flash` | [https://aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
 | **Groq** | `llama-3.1-8b-instant` | [https://console.groq.com/keys](https://console.groq.com/keys) |
 | **OpenRouter** | `meta-llama/llama-3.3-70b-instruct:free` | [https://openrouter.ai/keys](https://openrouter.ai/keys) |
 
@@ -149,9 +151,9 @@ If you want the server to have a default API key so students don't need to paste
 
 ## 🧑‍🎓 3. How to Use the Website (Student Guide)
 
-1. **Choose a Level:** Start at **Level 1** on the home page. Levels 2–5 unlock sequentially as you finish each level.
-2. **Read the Lesson:** The left panel explains how the Python concept works step by step with examples.
-3. **Fill in the Missing Lines:** In the `main.py` editor on the right, type only the missing line(s) of code in the highlighted input boxes.
+1. **Choose a Level:** Start at **Level 1** on the home page. Levels 1–3 unlock sequentially as you finish all 4 exercises in each level.
+2. **Read the Lesson:** The left panel explains how the Python concept works step by step in super-beginner language with examples.
+3. **Complete the 4 Exercises (1 point each):** Each level has **4 exercises** (shown as tabs at the top of the Exercise panel). Type only the missing line(s) of code in the highlighted input boxes.
 4. **Test with ▶ Run:**
    - Click **▶ Run** (or press `Ctrl+Enter`) to run your code in the browser.
    - If the program uses `input()`, type test values in the **Input** box (one value per line).
@@ -161,12 +163,12 @@ If you want the server to have a default API key so students don't need to paste
    - **Need help?** Click **💡 Hint** (up to **3 hints per level**). Each hint gets more specific without giving away the answer.
    - **Still wrong after all 3 hints?** Submitting an incorrect answer after using all 3 hints triggers **Solution Review**: the AI explains your mistake, fills in the working solution, and marks the level as `Solution shown` so you can move on to the next level.
 6. **View Your Grade (`Report` page):**
-   - Finish all 5 levels and click **Report** (or **🏆 See your grade**) to see your final grade and personalized AI feedback:
-     - **A:** 0 hints used and 0 incorrect attempts across all 5 levels
+   - Finish all 3 levels (12 exercises / 12 points total) and click **Report** (or **🏆 See your grade**) to see your 12-point score, final grade, and personalized AI feedback:
+     - **A:** 12/12 points, 0 hints used, and 0 incorrect attempts across all 3 levels
      - **B+:** 1–5 hints used (or 0 hints with some incorrect attempts)
      - **B:** 6–9 hints used
      - **C:** 10–12 hints used
-     - **D:** 13–15 hints used, or any level ended with the solution revealed
+     - **D:** 13+ hints used, or any exercise ended with the solution revealed
 7. **Reset Anytime:** Click **↺ Reset Progress** in the top navigation bar to clear your browser's saved progress and start fresh from Level 1.
 
 ---

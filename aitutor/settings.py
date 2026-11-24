@@ -76,3 +76,4 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 HARNESS_PATH = BASE_DIR / "static" / "py" / "harness.py"
 CODE_RUN_TIMEOUT_SECONDS = 5
 MAX_HINTS_PER_LEVEL = 3
+UNLOCK_ALL = os.getenv("UNLOCK_ALL", "0") == "1"

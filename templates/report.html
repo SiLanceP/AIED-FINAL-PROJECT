@@ -8,12 +8,12 @@
     <div id="grade" class="grade">–</div>
     <div>
       <p id="grade-reason" class="grade-reason">Loading…</p>
-      <p class="muted">Total hints: <b id="total-hints">0</b> · Incorrect attempts: <b id="total-wrong">0</b></p>
+      <p class="muted">Score: <b id="total-points">0 / 12</b> pts · Total hints: <b id="total-hints">0</b> · Incorrect attempts: <b id="total-wrong">0</b></p>
     </div>
   </div>
 
   <table class="table">
-    <thead><tr><th>Level</th><th>Topic</th><th>Status</th><th>Hints</th><th>Incorrect</th></tr></thead>
+    <thead><tr><th>Level</th><th>Topic</th><th>Status</th><th>Points</th><th>Hints</th><th>Incorrect</th></tr></thead>
     <tbody id="level-rows"></tbody>
   </table>
 
@@ -31,13 +31,13 @@
 <section class="grading-info">
   <h3>How you are graded</h3>
   <table class="table">
-    <thead><tr><th>Grade</th><th>Condition (all 5 levels)</th></tr></thead>
+    <thead><tr><th>Grade</th><th>Condition (across all 3 levels · 12 points total)</th></tr></thead>
     <tbody>
-      <tr><td><b>A</b></td><td>No hints and no incorrect attempts</td></tr>
+      <tr><td><b>A</b></td><td>All 12 exercises passed (12/12 pts), no hints and no incorrect attempts</td></tr>
       <tr><td><b>B+</b></td><td>1–5 hints (or no hints but some incorrect attempts)</td></tr>
       <tr><td><b>B</b></td><td>6–9 hints</td></tr>
       <tr><td><b>C</b></td><td>10–12 hints</td></tr>
-      <tr><td><b>D</b></td><td>13–15 hints, or a solution had to be shown</td></tr>
+      <tr><td><b>D</b></td><td>13+ hints, or a solution had to be shown</td></tr>
     </tbody>
   </table>
 </section>
@@ -47,5 +47,5 @@
   window.LEVEL_NUMBERS = [{% for l in levels %}{{ l.number }}{% if not forloop.last %},{% endif %}{% endfor %}];
   window.LEVEL_TITLES = { {% for l in levels %}{{ l.number }}: "{{ l.title|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %} };
 </script>
-<script src="{% static 'js/report.js' %}"></script>
+<script src="{% static 'js/report.js' %}?v=3"></script>
 {% endblock %}

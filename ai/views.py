@@ -33,5 +33,7 @@ def list_models_view(request):
         cfg = resolve_config({"provider": provider, "base_url": base_url})
     except AIUnavailable as e:
         return JsonResponse({"models": [], "active_model": "", "error": str(e)})
+    if cfg.kind != "local":
+        return JsonResponse({"models": [], "active_model": ""})
     from .providers import _list_models
     return JsonResponse({"models": _list_models(cfg), "active_model": cfg.model})

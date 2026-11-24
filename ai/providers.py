@@ -18,6 +18,23 @@ from urllib.parse import urlparse
 from openai import OpenAI, OpenAIError
 
 PRESETS = {
+    "auto": {
+        "label": "Automatic (recommended, no setup)",
+        "kind": "auto",
+        "base_url": "",
+        "model": "",
+        "env_key": "",
+        "key_url": "",
+    },
+    "pollinations": {
+        "label": "Pollinations (online, free, no key needed)",
+        "kind": "cloud",
+        "keyless": True,
+        "base_url": "https://text.pollinations.ai/openai",
+        "model": "openai",
+        "env_key": "POLLINATIONS_API_KEY",
+        "key_url": "https://pollinations.ai",
+    },
     "gemini": {
         "label": "Google Gemini (online, free tier)",
         "kind": "cloud",
@@ -98,8 +115,8 @@ def _is_local_url(url):
 
 
 def default_provider():
-    p = os.getenv("DEFAULT_AI_PROVIDER", "ollama")
-    return p if p in PRESETS else "ollama"
+    p = os.getenv("DEFAULT_AI_PROVIDER", "auto")
+    return p if p in PRESETS else "auto"
 
 
 def _normalize_base_url(url, kind):
@@ -111,7 +128,9 @@ def _normalize_base_url(url, kind):
 
 def _list_models(cfg):
     try:
-        return sorted(m.id for m in _client(cfg).models.list())[:100]
+        timeout = 3 if cfg.kind == "local" else cfg.timeout
+        client = OpenAI(base_url=cfg.base_url, api_key=cfg.api_key, timeout=timeout, max_retries=0)
+        return sorted(m.id for m in client.models.list())[:100]
     except OpenAIError:
         return []
 
@@ -123,8 +142,8 @@ def resolve_config(user_settings=None):
     if provider not in PRESETS:
         raise AIUnavailable(f"Unknown AI provider '{provider}'.")
     preset = PRESETS[provider]
-    if preset["kind"] == "none":
-        return AIConfig(provider, "", "", "", "none")
+    if preset["kind"] in ("none", "auto"):
+        return AIConfig(provider, "", "", "", preset["kind"])
 
     user_model = (s.get("model") or "").strip() or os.getenv(f"{provider.upper()}_MODEL")
     model = user_model or preset["model"]
@@ -139,6 +158,8 @@ def resolve_config(user_settings=None):
     else:
         base_url = preset["base_url"]
         api_key = (s.get("api_key") or "").strip() or os.getenv(preset["env_key"], "")
+        if not api_key and preset.get("keyless"):
+            api_key = "anonymous"  # free keyless service; the client just needs a non-empty value
         if not api_key:
             raise AIUnavailable(
                 f"No API key for {preset['label']}. Add one in AI Settings or in the server .env file."
@@ -148,7 +169,9 @@ def resolve_config(user_settings=None):
     # automatically pick an installed model so it works out of the box.
     if cfg.kind == "local":
         installed = _list_models(cfg)
-        if installed and cfg.model not in installed:
+        if not installed:
+            raise AIUnavailable(f"{preset['label']} is not running on this computer.")
+        if cfg.model not in installed:
             if not user_model:
                 # Prefer a larger instruct/coder model if available, otherwise first installed
                 preferred = [m for m in installed if "7b" in m.lower() or "coder" in m.lower()]
@@ -161,6 +184,22 @@ def resolve_config(user_settings=None):
     return cfg
 
 
+def auto_candidates():
+    """Order tried by Automatic mode:
+    1. Keyed online AI (if a key is configured in .env: Gemini, Groq, OpenRouter)
+    2. Local Ollama (if running on this computer — fast, unlimited)
+    3. Free keyless online AI (Pollinations — works anywhere with no setup; 1 reply / 45s)
+    4. (Caller falls back to built-in hints if none of the above respond)
+    """
+    order = []
+    for name in ("gemini", "groq", "openrouter"):
+        if os.getenv(PRESETS[name]["env_key"]):
+            order.append({"provider": name})
+    order.append({"provider": "ollama"})
+    order.append({"provider": "pollinations"})
+    return order
+
+
 _THINK_RE = re.compile(r"<think>.*?</think>", re.DOTALL | re.IGNORECASE)
 
 
@@ -168,28 +207,51 @@ def _client(cfg):
     return OpenAI(base_url=cfg.base_url, api_key=cfg.api_key, timeout=cfg.timeout, max_retries=1)
 
 
-def chat(user_settings, system_prompt, user_prompt, max_tokens=400):
-    """Send one chat request. Returns (text, AIConfig). Raises AIUnavailable."""
+def _chat_one(user_settings, system_prompt, user_prompt, max_tokens):
     cfg = resolve_config(user_settings)
     if cfg.kind == "none":
         raise AIUnavailable("AI is turned off in AI Settings.")
+    kwargs = {}
+    # Keyless reasoning models spend tokens "thinking", so don't cap their output.
+    if not PRESETS[cfg.provider].get("keyless"):
+        kwargs["max_tokens"] = max_tokens
     try:
         resp = _client(cfg).chat.completions.create(
             model=cfg.model,
             temperature=0.3,
-            max_tokens=max_tokens,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
+            **kwargs,
         )
     except OpenAIError as e:
         raise AIUnavailable(f"{PRESETS[cfg.provider]['label']}: {type(e).__name__}: {str(e)[:200]}") from e
     text = (resp.choices[0].message.content or "") if resp.choices else ""
     text = _THINK_RE.sub("", text).strip()  # strip reasoning from "thinking" models (qwen3, deepseek-r1)
     if not text:
-        raise AIUnavailable("The AI returned an empty response.")
+        raise AIUnavailable(f"{PRESETS[cfg.provider]['label']} returned an empty response.")
     return text, cfg
+
+
+def chat(user_settings, system_prompt, user_prompt, max_tokens=400):
+    """Send one chat request. Returns (text, AIConfig). Raises AIUnavailable.
+
+    In Automatic mode, each provider from ``auto_candidates()`` is tried in order
+    until one answers.
+    """
+    s = user_settings or {}
+    provider = s.get("provider") or default_provider()
+    if provider != "auto":
+        return _chat_one(s, system_prompt, user_prompt, max_tokens)
+
+    errors = []
+    for candidate in auto_candidates():
+        try:
+            return _chat_one(candidate, system_prompt, user_prompt, max_tokens)
+        except AIUnavailable as e:
+            errors.append(str(e))
+    raise AIUnavailable("Automatic mode could not reach any AI. " + " | ".join(errors))
 
 
 def test_connection(user_settings):
@@ -197,13 +259,14 @@ def test_connection(user_settings):
     cfg = resolve_config(user_settings)
     if cfg.kind == "none":
         return {"ok": True, "message": "AI is turned off. Built-in hints will be used.", "models": [], "active_model": ""}
-    models = _list_models(cfg)
-    reply, cfg = chat(user_settings, "You are a test endpoint.", "Reply with exactly: OK", max_tokens=20)
+    models = [] if cfg.kind == "auto" else _list_models(cfg)
+    reply, used = chat(user_settings, "You are a test endpoint.", "Reply with exactly: OK", max_tokens=20)
+    prefix = "Automatic mode is working - " if cfg.kind == "auto" else ""
     return {
         "ok": True,
-        "message": f"Connected to {PRESETS[cfg.provider]['label']} using model '{cfg.model}'. Reply: {reply[:60]}",
+        "message": f"{prefix}Connected to {PRESETS[used.provider]['label']} using model '{used.model}'. Reply: {reply[:60]}",
         "models": models,
-        "active_model": cfg.model,
+        "active_model": "" if cfg.kind == "auto" else used.model,
     }
 
 
@@ -214,9 +277,10 @@ def public_presets():
             "label": p["label"],
             "kind": p["kind"],
             "model": p["model"],
+            "keyless": bool(p.get("keyless")),
             "base_url": p["base_url"] if p["kind"] == "local" else "",
             "key_url": p["key_url"],
-            "server_has_key": bool(p["kind"] == "cloud" and os.getenv(p["env_key"])),
+            "server_has_key": bool(p["kind"] == "cloud" and p["env_key"] and os.getenv(p["env_key"])),
         }
         for name, p in PRESETS.items()
     }

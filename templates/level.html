@@ -24,41 +24,28 @@
 <section class="exercise">
   <div class="panel">
     <div class="panel-head">
-      <h2>✏️ Exercise</h2>
+      <h2 id="ex-title">✏️ Exercise 1 of {{ exercises|length }}</h2>
       <div class="stats">
+        <span>Points: <b id="stat-points">0 / {{ exercises|length }}</b></span>
         <span>Incorrect: <b id="stat-wrong">0</b></span>
         <span>Hints: <b id="stat-hints">0 / 3</b></span>
       </div>
     </div>
-    <div class="prose instructions">{{ instructions_html }}</div>
+
+    <div id="ex-tabs" class="ex-tabs" role="tablist" aria-label="Level exercises">
+      {% for ex in exercises %}
+      <button type="button" class="ex-tab" data-ex="{{ ex.number }}">
+        <span class="ex-tab-num">Exercise {{ ex.number }}</span>
+        <span class="ex-tab-state">1 pt</span>
+      </button>
+      {% endfor %}
+    </div>
+
+    <div id="instructions" class="prose instructions"></div>
 
     <div class="editor" aria-label="Code editor - type the missing lines">
       <div class="editor-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="filename">main.py</span></div>
-      <div class="editor-body">
-        {% for row in rows %}
-          {% if row.blank %}
-          <div class="code-row blank" data-line="{{ row.n }}">
-            <span class="ln">{{ row.n }}</span>
-            <span class="indent">{{ row.indent }}</span>
-            <input class="blank-input" type="text" data-index="{{ row.blank_index }}"
-                   placeholder="Type missing line {{ row.blank_index|add:1 }} here…"
-                   spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off">
-          </div>
-          {% else %}
-          <div class="code-row" data-line="{{ row.n }}">
-            <span class="ln">{{ row.n }}</span>
-            <code class="language-python static-line">{% if row.text %}{{ row.text }}{% else %} {% endif %}</code>
-          </div>
-          {% endif %}
-        {% endfor %}
-      </div>
-    </div>
-
-    <div class="io-row">
-      <div class="stdin-wrap">
-        <label for="stdin">Input <span class="muted">(values for <code>input()</code>, one per line)</span></label>
-        <textarea id="stdin" rows="3" spellcheck="false">{{ sample_stdin }}</textarea>
-      </div>
+      <div id="editor-body" class="editor-body"></div>
     </div>
 
     <div class="actions">
@@ -73,37 +60,35 @@
       <pre id="output" class="console-body">Press ▶ Run to try your code.</pre>
     </div>
 
-    <div id="level-done" class="level-done" hidden>
-      <span id="level-done-text"></span>
+    <div id="ex-done" class="level-done" hidden>
+      <span id="ex-done-text"></span>
+      <button id="next-ex-btn" type="button" class="btn btn-primary" hidden>Next Exercise →</button>
       {% if next_number %}
-        <a class="btn btn-primary" href="{% url 'level' next_number %}">Next: Level {{ next_number }} →</a>
+        <a id="next-level-btn" class="btn btn-primary" href="{% url 'level' next_number %}" hidden>Next: Level {{ next_number }} →</a>
       {% else %}
-        <a class="btn btn-primary" href="{% url 'report' %}">🏆 See your grade</a>
+        <a id="next-level-btn" class="btn btn-primary" href="{% url 'report' %}" hidden>🏆 See your grade</a>
       {% endif %}
     </div>
   </div>
 
   <div class="panel">
     <div class="panel-head"><h2>🧑‍🏫 Tutor</h2></div>
-    <div id="tutor-feed" class="tutor-feed">
-      <div class="msg msg-info"><div class="msg-body">Fill in the missing lines, press <b>▶ Run</b> to test, then <b>✓ Submit</b>. I'll help if you get stuck.</div></div>
-    </div>
+    <div id="tutor-feed" class="tutor-feed"></div>
   </div>
 </section>
 {% endblock %}
 
 {% block scripts %}
-{{ rows|json_script:"rows-data" }}
+{{ exercises_payload|json_script:"exercises-data" }}
 <script>
-  document.querySelectorAll(".static-line").forEach((el) => window.hljs && hljs.highlightElement(el));
   window.LEVEL_CONFIG = {
     number: {{ level.number }},
     levelNumbers: [{% for n in level_numbers %}{{ n }}{% if not forloop.last %},{% endif %}{% endfor %}],
     maxHints: 3,
-    rows: JSON.parse(document.getElementById("rows-data").textContent),
+    exercises: JSON.parse(document.getElementById("exercises-data").textContent),
     workerUrl: "{% static 'js/py-worker.js' %}",
     harnessUrl: "{% static 'py/harness.py' %}",
   };
 </script>
-<script src="{% static 'js/level.js' %}"></script>
+<script src="{% static 'js/level.js' %}?v=3"></script>
 {% endblock %}
