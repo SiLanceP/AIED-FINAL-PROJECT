@@ -123,7 +123,7 @@ If your computer doesn't have enough RAM/VRAM for a local LLM, use any of these 
 
 | Provider | Default Model | Where to get a Free API Key |
 |---|---|---|
-| **Google Gemini** (default) | `gemini-2.5-flash` | [https://aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
+| **Google Gemini** (default) | `gemini-3.5-flash` | [https://aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
 | **Groq** | `llama-3.1-8b-instant` | [https://console.groq.com/keys](https://console.groq.com/keys) |
 | **OpenRouter** | `meta-llama/llama-3.3-70b-instruct:free` | [https://openrouter.ai/keys](https://openrouter.ai/keys) |
 

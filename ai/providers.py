@@ -39,7 +39,7 @@ PRESETS = {
         "label": "Google Gemini (online, free tier)",
         "kind": "cloud",
         "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
-        "model": "gemini-2.5-flash",
+        "model": "gemini-3.5-flash",
         "env_key": "GEMINI_API_KEY",
         "key_url": "https://aistudio.google.com/apikey",
     },
@@ -130,7 +130,7 @@ def _list_models(cfg):
     try:
         timeout = 3 if cfg.kind == "local" else cfg.timeout
         client = OpenAI(base_url=cfg.base_url, api_key=cfg.api_key, timeout=timeout, max_retries=0)
-        return sorted(m.id for m in client.models.list())[:100]
+        return sorted(m.id.removeprefix("models/") for m in client.models.list())[:100]
     except OpenAIError:
         return []
 
@@ -215,6 +215,8 @@ def _chat_one(user_settings, system_prompt, user_prompt, max_tokens):
     # Keyless reasoning models spend tokens "thinking", so don't cap their output.
     if not PRESETS[cfg.provider].get("keyless"):
         kwargs["max_tokens"] = max_tokens
+    if cfg.provider == "gemini":
+        kwargs["reasoning_effort"] = "none"
     try:
         resp = _client(cfg).chat.completions.create(
             model=cfg.model,
@@ -226,7 +228,11 @@ def _chat_one(user_settings, system_prompt, user_prompt, max_tokens):
             **kwargs,
         )
     except OpenAIError as e:
-        raise AIUnavailable(f"{PRESETS[cfg.provider]['label']}: {type(e).__name__}: {str(e)[:200]}") from e
+        detail = str(e)
+        resp_text = getattr(getattr(e, "response", None), "text", "") or ""
+        if len(detail) < 30 and resp_text:
+            detail = f"{detail} ({' '.join(resp_text.split())[:160]})"
+        raise AIUnavailable(f"{PRESETS[cfg.provider]['label']}: {type(e).__name__}: {detail[:200]}") from e
     text = (resp.choices[0].message.content or "") if resp.choices else ""
     text = _THINK_RE.sub("", text).strip()  # strip reasoning from "thinking" models (qwen3, deepseek-r1)
     if not text:
@@ -260,7 +266,7 @@ def test_connection(user_settings):
     if cfg.kind == "none":
         return {"ok": True, "message": "AI is turned off. Built-in hints will be used.", "models": [], "active_model": ""}
     models = [] if cfg.kind == "auto" else _list_models(cfg)
-    reply, used = chat(user_settings, "You are a test endpoint.", "Reply with exactly: OK", max_tokens=20)
+    reply, used = chat(user_settings, "You are a test endpoint.", "Reply with exactly: OK", max_tokens=100)
     prefix = "Automatic mode is working - " if cfg.kind == "auto" else ""
     return {
         "ok": True,
